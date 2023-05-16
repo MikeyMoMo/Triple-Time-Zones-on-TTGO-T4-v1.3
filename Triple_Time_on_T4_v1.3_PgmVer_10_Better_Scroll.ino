@@ -255,7 +255,7 @@ void loop()
 
   if (currSecond == 0) {
     if (currMinute == 0) {  // The second is 0. See if the minute is 0 also.
-      Serial.printf("currSecond %i, currMinute %i\r\n", currSecond, currMinute);
+      // Serial.printf("currSecond %i, currMinute %i\r\n", currSecond, currMinute);
       // This takes 1.6 seconds to complete.  That guarantees that the new second will be upon us.
       for (i = 0; i < 4; i++) {
         tft.invertDisplay(true); delay(200);
