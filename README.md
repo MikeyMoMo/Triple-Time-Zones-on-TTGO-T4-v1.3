@@ -11,7 +11,7 @@ It shows 3 different times from, obviously, 3 different time zones.  On top is U
 
 The rest of the program is not that remarkable.  Press the button and see the analog clock face.  On this version, I am not so happy with the hands.  I might change them to use another new tft_eSPI routine "wedge" that draws wedge-shaped shapes.  I didn't really like the wire frame hands.  The code is still there so you can choose between wire frame and wedge hands.  
 
-Lately added is a second switch to cycle between 6 variations of presentation of the analog clock.  With and without digital display (with or without seconds) and show or hide the second hand.  It checks the setting each 10 minutes and, if different, saves it with preferences.h.  Same for selection of analog or digital face selection.  This saves the flash life just a little bit.  Version 12 is the latest.  Older versions are left here, just for show, I guess.
+Lately added is a second switch to cycle between 6 variations of presentation of the analog clock.  With and without digital display (with or without seconds) and show or hide the second hand.  It checks the setting each 10 minutes and, if different, saves it with preferences.h.  Same for selection of analog or digital face selection.  This saves the flash life just a little bit.  Version 12 is the latest.  Older versions have been removed.  They may not be compatable with the latest support code modules.
 
 Enjoy.  As always, I gladly accept bug reports or program function enhancements (unlike some other software providers on here).
 
