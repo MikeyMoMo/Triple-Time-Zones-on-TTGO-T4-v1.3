@@ -24,7 +24,7 @@ OpenFontRender ofr;
 
 //  >>> *** The lengths must all be equal to the longest one *** <<<
 //  This is because of a well known but ignored error in a library.
-const char * Zulu  = "UTC0                  ";
+const char * Zulu  = "UTC0                  ";  // DO NOT CHANGE THIS ONE!!!!!
 const char * TopTZ = "PST8PDT,M3.2.0,M11.1.0";  // Top    city time zone
 const char * BotTZ = "PHT-8                 ";  // Bottom city time zone (normally local time)
 //  >>> *** *** *** *** *** *** *** *** *** *** *** *** *** ***  <<<
