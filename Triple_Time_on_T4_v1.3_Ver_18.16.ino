@@ -80,11 +80,11 @@ char BotDST[10];
 #include <HTTPClient.h>
 
 const int  maxAPIkeys = 4;
-const char * apiArray[] = {
-  "k5MJFkvlen6ebpAvKRpUlbbBd7uPAzAC",
-  "Livt8olpTHbdFKD1vY19vTfIy4IrolKy",
-  "gs2IkNdDcZMjmlCsfFn3PFPkBBquhu82",
-  "23TJj8EbyRWec1MPBECv5kLI7zAZNh3C",
+const char * apiArray[] = {  // Obtain one or more free keys from apilayer.com
+  "api key 1",
+  "api key 2",
+  "api key 3",
+  "api key 4",
 };
 
 // Setup file for ESP32 and TTGO T4 v1.3 SPI bus TFT
