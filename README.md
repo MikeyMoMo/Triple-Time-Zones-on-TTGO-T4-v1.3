@@ -5,15 +5,17 @@ This code is free for anyone to use, modify and redistrubute as long as original
 
 This program came from the base code used in the SSD1306 version, also in my GitHub project collection (MikeyMoMo).  This version uses Open Font Render so multiple sizes can be displayed from a single font file.  
 
-There are two different versions uploaded.  One has wire frame hands, the other has wedge hands.  Copy the one you want to test to a properly named foldler along with all of the other files except the other .ino with the other type of hands and compile.
+There is a #define to change the hands appearance.  One has wire frame hands, the other has wedge hands.  Change the #define to get the one you want to see.
 
-It shows 3 different times from, obviously, 3 different time zones.  On top is UTC(Zulu).  It is in a scroll (crawl) that includes the name of the program and version number.  The value added part is that I can update the scroll as it goes by.  It uses the tft_eSPI library function "scroll".  What else?!?!  It moves the entire sprite left or right and/or up or down.  It can move the sprite 8 ways.  The trick is tracking where the text is on the sprite, even if it has scrolled off.
+This version does NOT use ezTime.  There are too many problems with it and what I figured out to do makes it quite easy without it, even for DST and zones.  It shows 3 different times from, obviously, 3 different time zones.  On top is UTC(Zulu).  It is in a scroll (crawl) that includes the name of the program and version number.  The value added part is that I can update the scroll as it goes by.  It uses the tft_eSPI library function "scroll".  What else?!?!  It moves the entire sprite left or right and/or up or down.  It can move the sprite 8 ways.  The trick is tracking where the text is on the sprite, even if it has scrolled off.
 
-The rest of the program is not that remarkable.  Press the button and see the analog clock face.  On this version, I am not so happy with the hands.  I might change them to use another new tft_eSPI routine "wedge" that draws wedge-shaped shapes.  I didn't really like the wire frame hands.  The code is still there so you can choose between wire frame and wedge hands.  
+The rest of the program is not that remarkable.  Press the button and see the analog clock face.  I didn't really like the wire frame hands.  The code is still there so you can choose between wire frame and wedge hands.
 
 Lately added is a second switch to cycle between 6 variations of presentation of the analog clock.  With and without digital display (with or without seconds) and show or hide the second hand.  It checks the setting each 10 minutes and, if different, saves it with preferences.h.  Same for selection of analog or digital face selection.  This saves the flash life just a little bit.  Version 12 is the latest.  Older versions have been removed.  They may not be compatable with the latest support code modules.
 
-Enjoy.  As always, I gladly accept bug reports or program function enhancements (unlike some other software providers on here).
+And the 3rd button changes the background color on the analog clock display.  Put in for testing but left it in since I had no other need for a button.  I don't use the button2 library on this one since my needs are simple.
+
+Enjoy.  As always, I gladly accept bug reports or program function enhancements (unlike some other software providers on here).  Or just ask a question if you want.  I won't bite your head off like some developers.
 
 Mike Morrow
 
