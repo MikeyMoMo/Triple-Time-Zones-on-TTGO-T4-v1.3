@@ -1,6 +1,8 @@
 # Triple-Time-Zones-on-TTGO-T4-v1.3
 This version shows a scrolling UTC/Zulu time, 2 more time zones and has an Analog clock of local time.
 
+Get the api key at apilayer.com.  Free for 250 pulls per month of any information they have available.  I get a currency exchange rate with this program.  You can just put in a return at the top of the getXchangeRate routine to stop it updating.  It is already there, just uncomment it.
+
 This code is free for anyone to use, modify and redistrubute as long as original author atribution is left in.
 
 This program came from the base code used in the SSD1306 version, also in my GitHub project collection (MikeyMoMo).  This version uses Open Font Render so multiple sizes can be displayed from a single font file.  
