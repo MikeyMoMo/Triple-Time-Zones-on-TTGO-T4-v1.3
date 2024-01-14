@@ -46,7 +46,7 @@ const char * cZulu  = "UTC0                  ";  // DO NOT CHANGE THIS ONE!!!
 const char * cTopTZ = "PST8PDT,M3.2.0,M11.1.0";  // Top    city time zone
 const char * cBotTZ = "PHT-8                 ";  // Bottom city time zone (normally local time)
 //  >>> *** *** *** *** *** *** *** *** *** *** *** *** *** ***  <<<
-const char * cTopCity name = "Benicia";  // Top    city name
+const char * cTopCityname = "Benicia";  // Top    city name
 const char * cBotCityname = "Bangui";   // Bottom city name
 
 // There are 3 WiFi startup routines herewith.  Choose the one you like
