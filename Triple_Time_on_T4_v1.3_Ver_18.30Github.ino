@@ -240,7 +240,7 @@ void setup()
   pinMode(changeACShowingPin, INPUT);
   pinMode(changeACbackground, INPUT);
 
-/  time(&UTC);  // Get UTC epoch number.+
+time(&UTC);  // Get UTC epoch number.+
 #if defined CONFIG4MIKE
   workTime = UTC + iBotOffset;  // Assuming, for now, that the bottom clock is local time.
 #else
