@@ -39,7 +39,7 @@
 */
 // This table is never referenced.  Included here as documentation.
 // It is optimized out by the compiler.  Commented or not, makes no size difference.
-const char ENVName[][ARRAY_ENTRY_LEN] =
+const char* ENVName[] =
 { "Abu Dhabi=GMT+4",
   "Africa/Abidjan=GMT0",
   "Africa/Accra=GMT0",
@@ -669,7 +669,6 @@ const char ENVName[][ARRAY_ENTRY_LEN] =
   "US/Samoa=SST11",
   "Universal=UTC0",
   "W-SU=MSK-3MSD,M3.5.0,M10.5.0/3",
-  "WET=WET0WEST,M3.5.0/1,M10.5.0/1",
   "WET=WET0WEST,M3.5.0/1,M10.5.0/1",
   "Wellington=GMT+12",
   "West Central Africa=GMT+1",

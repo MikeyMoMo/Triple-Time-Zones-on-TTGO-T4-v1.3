@@ -3,27 +3,25 @@ void updateAnalogClock(time_t workTime)
 /***************************************************************************/
 {
   static int iPrevHour = -1;
-  static int iForeColor, iBackColor;
+  static int iForeColor = TFT_GOLD, iBackColor, iTotBrightness, R, G, B;
 
-  iStartMillis = millis();
-  //  clockSprite.fillSprite(RGB565(0, 60, 0));
+  //  iStartMillis = millis();
+  // Change the background color on the hour.  But not too bright!
   if ((iPrevHour != iCurrHour) || bChangeACBG) {
     iPrevHour = iCurrHour; bChangeACBG = false;
-    //    int R = random(80); int G = random(70); int B = random(80);
-    int R = esp_random() % 80; int G = esp_random() % 70; int B = esp_random() % 80;
+    iTotBrightness = 241;
+    while (iTotBrightness > 240) {
+      R = esp_random() % 80 + 40;  // Don't let it get too high, initially
+      G = esp_random() % 60 + 40;  //  but add 40 to brighten it up a bit.
+      B = esp_random() % 80 + 40;  //  If the % is too high, it gets too bright.
+      iTotBrightness = R + G + B;
+      Serial.printf("Changing AC BG color to R %03i, G %03i, B %03i for total of %i\r\n",
+                    R, G, B, iTotBrightness);
+    }
     iBackColor = RGB565(R, G, B);
-    Serial.printf("Changing AC BG color to R %03i, G %03i, B %03i or %5i\r\n",
-                  R, G, B, iBackColor);
-    //    R = 80 - R; G = 70 - G; B = 80 - B;
-    //    iForeColor = RGB565(R, G, B);
-    //    Serial.printf("Changing AC FG color to R %03i, G %03i, B %03i or %5i\r\n",
-    //                  R, G, B, iForeColor);
-    iForeColor = TFT_GOLD;
-    //    iForeColor = RGB565(B, G, R);
   }
-  clockSprite.fillSprite(iBackColor);  // iBackColor);
+  clockSprite.fillSprite(iBackColor);
   clockSprite.drawCircle(iXCenter, iYCenter, iRadius, TFT_YELLOW);  // Outside boundary circle of clock
-  //  ofr.setFontColor(iForeColor);
   clockSprite.setTextColor(iForeColor);  // Foreground color, Background color
   // Draw minute's ticks (60 lines) in white or gold.
   for (int ordinal = 0; ordinal < 60; ordinal++) {
@@ -31,12 +29,12 @@ void updateAnalogClock(time_t workTime)
     iMyX1 = iXCenter + (sin(dAngle) * iRadius);
     iMyY1 = iYCenter + (cos(dAngle) * iRadius);
     if (ordinal % 5 == 0) {
-      iMyX2 = iXCenter + (sin(dAngle) * (iRadius - 7));  // tic marks are 7 pixels long
-      iMyY2 = iYCenter + (cos(dAngle) * (iRadius - 7));  // tic marks are 7 pixels long
+      iMyX2 = iXCenter + (sin(dAngle) * (iRadius - 7));  // ordinal tic marks are 7 pixels long
+      iMyY2 = iYCenter + (cos(dAngle) * (iRadius - 7));  // ordinal tic marks are 7 pixels long
       clockSprite.drawLine(iMyX1, iMyY1, iMyX2, iMyY2, TFT_WHITE);
     } else {
-      iMyX2 = iXCenter + (sin(dAngle) * (iRadius - 3));
-      iMyY2 = iYCenter + (cos(dAngle) * (iRadius - 3));
+      iMyX2 = iXCenter + (sin(dAngle) * (iRadius - 3));  // other tic marks are 3 pixels long
+      iMyY2 = iYCenter + (cos(dAngle) * (iRadius - 3));  // other tic marks are 3 pixels long
       clockSprite.drawLine(iMyX1, iMyY1, iMyX2, iMyY2, iForeColor);
     }
   }
@@ -171,7 +169,6 @@ void updateAnalogClock(time_t workTime)
 
   // These two seem to be the same.  They look the same, anyway... At least at size 4.
   clockSprite.fillSmoothCircle(iXCenter, iYCenter, 4, iForeColor);
-  //  clockSprite.drawSpot(iXCenter, iYCenter, 4, iForeColor);  // Guess!
 
   showCorners(workTime);  // Fill in the day, month, date and year in the four corners.
 
@@ -179,23 +176,40 @@ void updateAnalogClock(time_t workTime)
   // This is not done with else since there is a third option, no digital time showing.
   if (bShowShortTime) {
     strftime(cCharWork, sizeof(cCharWork), "%H:%M", localtime(&workTime));  // Hour and minute only.
-    clockSprite.drawString(cCharWork, tft.width() / 2, tft.height()*.64);
+    //    clockSprite.drawString(cCharWork, tft.width() / 2, tft.height()*.64);
+    txtLen = tft.textWidth(cCharWork); if (txtLen > maxTxtLen1) maxTxtLen1 = txtLen;
+    //    Serial.printf("bShowLongTime Center screen: %i, maxTxtLen1: %i\r\n", iXCenter, maxTxtLen1);
+    iSavDatum = clockSprite.getTextDatum();
+    clockSprite.setTextDatum(TL_DATUM);
+    clockSprite.drawString(cCharWork,  iXCenter - maxTxtLen1 / 2, tft.height()*.64);  // qwer
+    clockSprite.setTextDatum(iSavDatum);
   }
   if (bShowLongTime) {
     strftime(cCharWork, sizeof(cCharWork), "%H:%M:%S", localtime(&workTime));  // Hour, minute & second.
-    clockSprite.drawString(cCharWork, tft.width() / 2, tft.height()*.64);
+    txtLen = tft.textWidth(cCharWork); if (txtLen > maxTxtLen2) maxTxtLen2 = txtLen;
+    //    Serial.printf("bShowLongTime Center screen: %i, maxTxtLen2: %i\r\n", iXCenter, maxTxtLen2);
+    iSavDatum = clockSprite.getTextDatum();
+    clockSprite.setTextDatum(TL_DATUM);
+    clockSprite.drawString(cCharWork,  iXCenter - maxTxtLen2 / 2, tft.height()*.64);  // qwer
+    clockSprite.setTextDatum(iSavDatum);
   }
 
   // Show the XRate on if digital time is shown (long or short). It will be on top of hands.
   if ((bShowShortTime || bShowLongTime) && fPHP_Rate > 0.) {  // Yeah, the extra parens is needed!
     dtostrf(fPHP_Rate, 2, 2, cCharWork);
-    clockSprite.setTextDatum(TC_DATUM);
-    clockSprite.drawString(cCharWork, tft.width() / 2, tft.height()*.28);
+    //    clockSprite.setTextDatum(TC_DATUM);
+    //    clockSprite.drawString(cCharWork, tft.width() / 2, tft.height()*.28);
+    txtLen = tft.textWidth(cCharWork); if (txtLen > maxTxtLen3) maxTxtLen3 = txtLen;
+    //    Serial.printf("(bShowShortTime || bShowLongTime Center screen: %i, txtLen: %i\r\n", iXCenter, txtLen);
+    iSavDatum = clockSprite.getTextDatum();
+    clockSprite.setTextDatum(TL_DATUM);
+    clockSprite.drawString(cCharWork,  iXCenter - maxTxtLen3 / 2, tft.height()*.28);  // qwer
+    clockSprite.setTextDatum(iSavDatum);
   }
   clockSprite.pushSprite(0, 0);
   // It has been taking around 65ms to run this routine including pushing the sprite to the display.
-  if ((millis() - iStartMillis) > 900)
-    Serial.printf("Total time for analog face update %lu ms.\r\n", millis() - iStartMillis);
+  //  if ((millis() - iStartMillis) > 900)
+  //    Serial.printf("Total time for analog face update %lu ms.\r\n", millis() - iStartMillis);
 }
 /***************************************************************************/
 void showCorners(time_t workTime)
