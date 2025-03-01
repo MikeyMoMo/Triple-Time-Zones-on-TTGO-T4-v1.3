@@ -1,16 +1,21 @@
-// This is written for a 240/320 display.  I am using a TTGO T4 v1.3 but
-//  others will work.  Just put in the correct TFT_eSPI config file.
+// Setup file for ESP32 and TTGO T4 v1.3 SPI bus TFT
+// Define TFT_eSPI object with the size of the screen:
+//  240 pixels width and 320 pixels height.
+
+//Use this: #include <User_Setups/Setup22_TTGO_T4_v1.3.h>
+// Others will work.  Just put in the correct TFT_eSPI config file.
 
 // If defined, do a smoother movement of the second hand.
 //  If not defined, jump the second hand one seconds at a time.
 //  It probably does not matter but the minute hand is "sweep" always.
 #define DO_SWEEP_HANDS
-
+// If defined, will put color under the three graphs.  Otherwise, they
+//  will only be line graphs instead of area graphs.
+#define FILL_GRAPH
 // If defined, show the modern wedge hands (slower but looks nice).
 #define WEDGE_HANDS
 
 #define myName "Triple sNTP Time "         // Version for T4 v1.3
-//#define myVersion "v.18.40"                // My version number.
 String OTAhostname = "ESP32 Triple Time";  // For OTA identification/upload.
 
 #include <SPI.h>           // Hardware management of the display
@@ -20,13 +25,13 @@ String OTAhostname = "ESP32 Triple Time";  // For OTA identification/upload.
 #include <ArduinoJson.h>   // For unscrambling the returned XRate packet.
 #include "TimeLib.h"       // Nice utilities for time manipulation/display.
 #include <ArduinoOTA.h>    // Yes, OTA is here.
-#include "Free_Fonts.h" // Include the header file attached to this sketch
+#include "Free_Fonts.h"    // Include the header file attached to this sketch
 //#include "Time_Zones.h"
 
 #include "Preferences.h"   // Remember stuff that's worth remembering.
 Preferences preferences;
-#define RO_MODE true   // Read-only mode
-#define RW_MODE false  // Read-write mode
+#define RO_MODE true   // Preferences calls Read-only mode
+#define RW_MODE false  // Preferences calls Read-write mode
 
 // SLOW but nice TTF font renderer in multiple sizes.  When I found the
 //  convenience of it, I switched the entire program over to it but it
@@ -41,6 +46,20 @@ OpenFontRender ofr;
 // 3/4 day.  After that, X data is stale. Clear.
 #define ulResetXRateTime 64800
 #define iXRateFetchCheckInterval 10  // In minutes.  Used in modulo.
+// It is silly to fetch all night long while sleeping.  Just pause it
+//  for a while.  It will stop with the hour shown at night and start
+//  with the hour shown in the morning.  Right now, you can't stop after
+//  midnight.  I have the code for that somewhere.  Will find it soon.
+unsigned long ulLastXRateFetchEpoch; // Epoch time of last fetch.
+
+// To NOT pause XRate fething and continue getting XRate every 3 hours,
+//  search for: "if (!doFetch) {" if the void getXchangeRate() routine 
+//  and comment out the entire little routine or
+//  add "doFetch = true;" just above it.
+// Or, you could possibly set start to 24 and stop to 24. Not tested!
+#define fetchStartHour 10  // Will start to fetch at 10:00 
+#define fetchStopHour  23  // Will not fetch starting at 23:00
+
 int XRateMon, XRateDay, XRateYr;
 
 //  >>> *** The lengths must all be equal to the longest one *** <<<
@@ -64,11 +83,13 @@ const char * ssid      = "MikeysWAP";
 const char * wifipw    = "Noogly99";
 
 // The following is for use in StartWiFiManager to name the captive portal.
-const char* cMyPortalName = "TTZPortal";  // Connect to 192.168.1.4 to set SSID/PW
+// Connect to 192.168.1.4 to set SSID/PW
+const char* cMyPortalName = "TTZPortal";  
 
 #define changeClockShowPin 38  // Change which of the 2 clocks to show
 #define changeACShowingPin 37  // Change how the analog display looks
-#define changeACbackground 39  // Change the background color of the Analog Clock
+#define changeACbackground 39  // Change the background color of the 
+                               //  Analog Clock
 
 // >>>>>>>>>>============  End of user changes  ============<<<<<<<<<<
 
@@ -96,12 +117,12 @@ unsigned int uiShowSecondHandBit = 2;  // bit shift amount for this option
 unsigned long secStartMillis;  // millis() when this second started.
 int  iYear, iMonth, iDay, iTopOffset, iBotOffset, iTempOffset;
 int  iPrevHour = -1, iCurrMinute = -1, iPrevSecond = -1, i;
-int  iCurrHour, iCurrSecond = -1, iCurrDay, iPrevDay = -1;
+int  iCurrHour, iCurrSecond = -1, iCurrDay, iCurrDOW, iPrevDay = -1;
 //long int liFirstHeapSize = 0, lLastHeapSize;
 int txtLen;
 int maxTxtLen1 = 0, maxTxtLen2 = 0, maxTxtLen3 = 0;
 int iSavDatum;
-time_t workTime, UTC;
+time_t workTime, UTC, XR_UTC;
 struct tm * timeinfo;
 
 // For various conversions from numbers to char for use in strcat.
@@ -129,29 +150,25 @@ const char * cAPI_Array[] = {
   //  you go over on your first key.  It will automatically switch to the
   //  backup key when it detects that the primary key is exhausted.
 #if defined CONFIG4MIKE
-  "API1",  // LaoagMikey key
-  "API2",  // BanguiMikey key (Mike Staples)
-  "API3",  // Joe 1
-  "API4",  // Joe 2
+  "yoJP5mfGfTMzdcRD535utiKqXP9iL91m",  // LaoagMikey key
+  "OvRWMRoM1kfqNNy6Mcp3bOi8ULm7bDC4",  // BanguiMikey key (Mike Staples)
+  "gs2IkNdDcZMjmlCsfFn3PFPkBBquhu82",  // Joe 1
+  "23TJj8EbyRWec1MPBECv5kLI7zAZNh3C",  // Joe 2
 #else
-  "API4",  // Joe 2
-  "API3",  // Joe 1
-  "API2",  // BanguiMikey key (Mike Staples)
-  "API1",  // LaoagMikey key
+  "23TJj8EbyRWec1MPBECv5kLI7zAZNh3C",  // Joe 2
+  "gs2IkNdDcZMjmlCsfFn3PFPkBBquhu82",  // Joe 1
+  "OvRWMRoM1kfqNNy6Mcp3bOi8ULm7bDC4",  // BanguiMikey key (Mike Staples)
+  "Cg7HVgyG4LQhsVnZOvVCojvKFNVjjYD1",  // LaoagMikey key
 #endif
 };
 
-// Setup file for ESP32 and TTGO T4 v1.3 SPI bus TFT
-// Define TFT_eSPI object with the size of the screen:
-//  240 pixels width and 320 pixels height.
-
-//Use this: #include <User_Setups/Setup22_TTGO_T4_v1.3.h>
 TFT_eSPI tft = TFT_eSPI();
 
 // Sprites are used to eliminate flickering.
-TFT_eSprite clockSprite = TFT_eSprite(&tft);
-TFT_eSprite scrollSprite = TFT_eSprite(&tft);
+TFT_eSprite clockSprite   = TFT_eSprite(&tft);
+TFT_eSprite scrollSprite  = TFT_eSprite(&tft);
 TFT_eSprite digitalSprite = TFT_eSprite(&tft);
+TFT_eSprite XRateSprite   = TFT_eSprite(&tft);
 
 int iScrollSpriteW, iScrollSpriteH;
 
@@ -167,6 +184,7 @@ const int ledBacklightFull = 255;
 #define RGB565(r,g,b) ((((r>>3)<<11) | ((g>>2)<<5) | (b>>3)))
 #define RGB888(r,g,b) ((r << 16) | (g << 8) | b)
 #define DarkerRed RGB565(150,0,0)
+#define DarkerGreen RGB565(0, 80, 0);
 //#define SecondHand RGB565(200,128,128)
 #define DarkPurple RGB565(118,0,100)
 #define DarkBlue RGB565(0, 0, 80)
@@ -197,9 +215,12 @@ int ihourlyBrilliance[] = { 70,  60,  50,  40,  30,  30,      //  0- 5
 int   iDigitalClock = 0;
 int   iAnalogClock = 1;
 int   iXGraph = 2;
-int   iMaxShow = 1;  // Until the graphing is ready.   
+int   iMaxShow = 3;  // Until the graphing is ready.
 int   iWhichClock = iDigitalClock;  // Later, save it for restarts.
-
+char* clockNames[] = {"Multi-time Digital Clock",
+                      "Analog Clock",
+                      "Exchange Rate Graph"
+                     };
 // Don't ask!
 const  char *numbers[12] = {"6", "5", "4", "3", "2", "1",
                             "12", "11", "10", "9", "8", "7"
@@ -216,20 +237,55 @@ const  int iDisplayLine5 = 138;
 int    iMyX1, iMyY1, iMyX2, iMyY2, iBackX, iBackY;
 int    iPlus90BulgeX, iPlus90BulgeY;
 int    iMinus90BulgeX, iMinus90BulgeY;
-int    iStartMillis;
 int    iRadius;
 
 double dAngle;
 float  fPHP_Rate = 0.;
 long   unsigned luLastXRateFetchTime = 0;
+long   unsigned iStartMillis;
 
 char   caReadingTime[50];  // For current exchange rate reading.
+int    iTemp;
 char   cTemp;
-String sTemp, sVer;
+String sTemp, sVer, sFetchesLeft;
 
+// Funny thing.  I started keeping 365 of these.  It would take some fancy
+//  code to get it down to 288 that I actually want to keep.  So I keep 365
+//  but only graph the last 288 (or less until it is full).  Some day, I might
+//  fix this.  Who knows... (Don't take bets that I will!)
 #define      XRateHistLen 365  // How many historical XRates to keep.
 float        XRateHist[XRateHistLen];   // One XRate per day.
 unsigned int XRateJulian[XRateHistLen];  // Julian Date based on 1/1/4713 BCE.
+int totXRatesaved = 0;  // How many daily XRates are in the array, now.
+float pixelsPerHundredthV;
+const int graphFloorMargin = 20;   // X axis here.
+const int graphLeftMargin  = 40;   // Y axis here from the left.
+// When the graph screen is selected, I only calculate and show it once.  
+//  But if XRate fetch runs, it steals the screen so this bool has to be 
+//  set to tell the graph routine that it needs to refresh the screen.  
+//  It is set other places, too, to remind the graph production routine 
+//  to refresh the screen.  After the graph is shown once, it is deactivated 
+//  by setting this bool to false.  It won't  show again until someone else 
+//  tells him to.  We are a cooperative lot!
+bool refreshGraph = true;  // Show the XRate history graph one time.
+
+// SSDays (Short Short Day) is used for the calendar column headers only.
+String SSDays[7] = {"SU", "MO", "TU", "WE", "TH", "FR", "SA"};
+//String LDays[7] = {"Sunday", "Monday", "TueSDays", "WedneSDays", "ThurSDays",
+//                  "Friday", "Saturday"
+//                 };
+String SDays[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+                  };
+String Months[12] = {"January", "February", "March", "April", "May", "June",
+                     "July", "August", "September", "October", "November",
+                     "December"
+                    };
+String SMonths[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                     };
+
+#define RGB565(r,g,b) ((((r>>3)<<11) | ((g>>2)<<5) | (b>>3)))
+#define DarkerGreen RGB565(0,100,0)
 
 //TL_DATUM 0 // Top left (default)
 //TC_DATUM 1 // Upper center
@@ -243,6 +299,7 @@ unsigned int XRateJulian[XRateHistLen];  // Julian Date based on 1/1/4713 BCE.
 //BL_DATUM 6 // Bottom left
 //BC_DATUM 7 // Bottom center
 //BR_DATUM 8 // Bottom right
-//L_BASELINE 9 // Base line of the left character (line on which the character ‘A’ would sit)
+// (line on which the character ‘A’ would sit)
+//L_BASELINE 9 // Base line of the left character 
 //C_BASELINE 10 // Base line of the central character
 //R_BASELINE 11 // Base line of the right character

@@ -127,19 +127,21 @@ void scrollIt()
     //                  (unsigned)strlen(cCharWork));
     iCurrTxtWidth = scrollSprite.textWidth(cCharWork) + iSpacer;
     if (iPreviTxtWidth != iCurrTxtWidth) {
-      Serial.printf("Resizing scrollSprite to %i\r\n", iCurrTxtWidth);
       iPreviTxtWidth = iCurrTxtWidth;
+      Serial.printf("Resizing scrollSprite to %i\r\n", iCurrTxtWidth);
+      Serial.printf("for text: %s\r\n", cCharWork);
       scrollSprite.deleteSprite();
       iScrollSpriteW = iCurrTxtWidth;
+      // Reallocate sprite for scrolling info with new size.
       int *a = (int*)scrollSprite.createSprite(iScrollSpriteW,
-               iScrollSpriteH); // Sprite for scrolling info
+               iScrollSpriteH);
       if (a == 0) {
         Serial.println("scrollSprite creation failed in scrollIt.  "
                        "Cannot continue.");
         while (1);
       }
       tft.fillRect(0, 0, tft.width(), iScrollSpriteH, DarkBlue);
-      // Restart from the left to avoid an irritating jump in the sprite.
+      // Restart from the right to avoid an irritating jump in the sprite.
       msg1Head = tft.width();
     }
     // Initialize (clear) it to Dark Blue.
@@ -157,6 +159,7 @@ void scrollIt()
   scrollSprite.pushSprite(msg1Head, 0);
   // Copy 2 - Only throw it at the screen if it can be seen.
   if ((msg1Head + iScrollSpriteW) > tft.width()) return;
-  // Same song, second verse.
+  // Same song, second verse (also the same).
+  // Add trailing sprite.
   scrollSprite.pushSprite(msg1Head + iScrollSpriteW, 0);
 }

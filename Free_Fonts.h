@@ -1,16 +1,17 @@
-// Attach this header file to your sketch to use the GFX Free Fonts. You can write
-// sketches without it, but it makes referencing them easier.
+// Attach this header file to your sketch to use the GFX Free Fonts. 
+//  You can write sketches without it, but it makes referencing them easier.
 
 // This calls up ALL the fonts but they only get loaded if you actually
 // use them in your sketch.
 //
-// No changes are needed to this header file unless new fonts are added to the
-// library "Fonts/GFXFF" folder.
+// No changes are needed to this header file unless new fonts are added 
+//  to the library "Fonts/GFXFF" folder.
 //
-// To save a lot of typing long names, each font can easily be referenced in the
-// sketch in three ways, either with:
+// To save a lot of typing long names, each font can easily be referenced 
+//  in the sketch in three ways, either with:
 //
-//    1. Font file name with the & in front such as &FreeSansBoldOblique24pt7b
+//    1. Font file name with the & in front such as 
+//       &FreeSansBoldOblique24pt7b
 //       an example being:
 //
 //       tft.setFreeFont(&FreeSansBoldOblique24pt7b);
@@ -39,9 +40,11 @@
 //
 //      tft.setFreeFont(NULL); // Set font to GLCD
 
-#ifdef LOAD_GFXFF // Only include the fonts if LOAD_GFXFF is defined in User_Setup.h
+// Only include the fonts if LOAD_GFXFF is defined in User_Setup.h
+#ifdef LOAD_GFXFF 
 
-// Use these when printing or drawing text in GLCD and high rendering speed fonts
+// Use these when printing or drawing text in GLCD and high rendering 
+//  speed fonts
 #define GFXFF 1
 #define GLCD  0
 #define FONT2 2
@@ -178,12 +181,12 @@
 #define FF47 &FreeSerifBoldItalic18pt7b
 #define FF48 &FreeSerifBoldItalic24pt7b
 
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // Now we define "s"tring versions for easy printing of the font name so:
 //   tft.println(sFF5);
 // will print
 //   Mono bold 9
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 #define sFF0 "GLCD"
 #define sTT1 "Tom Thumb"
@@ -205,7 +208,8 @@
 #define sFF13 "Mono bold oblique 9"
 #define sFF14 "Mono bold oblique 12"
 #define sFF15 "Mono bold oblique 18"
-#define sFF16 "Mono bold obl. 24" // Full text line is too big for 480 pixel wide screen
+// Full text line is too big for 480 pixel wide screen
+#define sFF16 "Mono bold oblique 24" 
 
 #define sFF17 "Sans 9"
 #define sFF18 "Sans 12"
@@ -249,10 +253,10 @@
 
 #else // LOAD_GFXFF not defined so setup defaults to prevent error messages
 
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // Free fonts are not loaded in User_Setup.h so we must define all as font 1
 // to prevent compile error messages
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 #define GFXFF 1
 #define GLCD  1

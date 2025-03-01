@@ -1,4 +1,27 @@
 /***************************************************************************/
+void countXRate(bool printList, bool printTot)
+/***************************************************************************/
+{
+  totXRatesaved = 0;
+  if (printList)
+    Serial.println("Current non-zero XRate history table entries.");
+  for (i = 0; i < XRateHistLen; i++) {
+    if (XRateHist[i] != 0.) {
+      if (printList) {
+        // Sets XRateMon, XRateDay & XRateYr.
+        JulianToGregorian(XRateJulian[i]);
+        Serial.printf("XRate for element %i value %.3f, Julian %u, "
+                      "%02i/%02i/%02i\r\n",
+                      i, XRateHist[i], XRateJulian[i], XRateMon, XRateDay,
+                      XRateYr);
+      }
+      totXRatesaved++;
+    }
+  }
+  if (printTot)
+    Serial.printf("There are %i saved daily rates\r\n\r\n", totXRatesaved);
+}
+/***************************************************************************/
 int DaysInMonth(int iYear, int iMonth)
 /***************************************************************************/
 {
@@ -35,27 +58,6 @@ int DaysInMonth(int iYear, int iMonth)
 //C
 //      RETURN
 //      END
-/***************************************************************************/
-void JulianToGregorian(unsigned int JD)
-/***************************************************************************/
-{
-  int i, j, k, l, n;
-
-  l = JD + 68569;
-  n = 4 * l / 146097;
-  l = l - (146097 * n + 3) / 4;
-  i = 4000 * (l + 1) / 1461001;
-  l = l - 1461 * i / 4 + 31;
-  j = 80 * l / 2447;
-  k = l - 2447 * j / 80;
-  l = j / 11;
-  j = j + 2 - 12 * l;
-  i = 100 * (n - 49) + i + l;
-
-  XRateYr = i;
-  XRateMon = j;
-  XRateDay = k;
-}
 /***************************************************************************/
 unsigned int leap(unsigned int year)
 /***************************************************************************/
@@ -133,6 +135,25 @@ unsigned int calcJulian(unsigned int myyear, unsigned int mymonth,
          + myday - 1;
 }
 /***************************************************************************/
+void JulianToGregorian(unsigned int JD)
+/***************************************************************************/
+{
+  int i, j, k, l, n;
+
+  l = JD + 68569;
+  n = 4 * l / 146097;
+  l = l - (146097 * n + 3) / 4;
+  i = 4000 * (l + 1) / 1461001;
+  l = l - 1461 * i / 4 + 31;
+  j = 80 * l / 2447;
+  k = l - 2447 * j / 80;
+  l = j / 11;
+  j = j + 2 - 12 * l;
+  i = 100 * (n - 49) + i + l;
+  // And, now, the results of today's race...
+  XRateYr = i; XRateMon = j; XRateDay = k;
+}
+/***************************************************************************/
 void printVers()
 /***************************************************************************/
 {
@@ -169,7 +190,8 @@ void decodeAC_Bits()
   // This unnecessarily complex.  I just felt like doing it this way to
   //  sharpen my skill at decoding bit coded stuff.  It should have just
   //  been a switch case.  Others have done worse!
-  if (uiAC_Custom & 0x1 << bShowShortTimeBit) {  // See if short time requested
+  // See if short time requested
+  if (uiAC_Custom & 0x1 << bShowShortTimeBit) {
     bShowShortTime = true;
   } else {
     bShowShortTime = false;
@@ -190,9 +212,9 @@ void decodeAC_Bits()
 void initDisplay()
 /***************************************************************************/
 {
-  // Note: Currently, font size 28 is used for everything except for notificaiton
-  //       screens.  Size 38 is used for notifications screens and is reset after
-  //       use, at routine end.
+  // Note: Currently, font size 28 is used for everything except for
+  //  notificaiton screens.  Size 38 is used for notifications screens
+  //  and is reset after use, at routine end.
   tft.init(); // Initialize the screen.
   tft.setRotation(3);       // Power on top.  1 for power at bottom
   iXCenter = tft.width() / 2;
@@ -202,11 +224,13 @@ void initDisplay()
   scrollSprite.setTextWrap(false, false);
   ofr.setDrawer(clockSprite);
   if (ofr.loadFont(BritanicBoldTTF, sizeof(BritanicBoldTTF))) {
-    Serial.println("Render loadFont error for BritanicBoldTTF. InitDisplay 1");
+    Serial.println("Render loadFont error for BritanicBoldTTF. "
+                   "InitDisplay 1");
     while (1);
   }
   ofr.setFontSize(28);
-  //  Serial.printf("Text height for size 28 is %i\r\n", ofr.getTextHeight("AB8Myp"));
+  //  Serial.printf("Text height for size 28 is %i\r\n",
+  //                ofr.getTextHeight("AB8Myp"));
 
   tft.fillScreen(TFT_BLACK);
 #if defined TFT_BL
@@ -214,24 +238,27 @@ void initDisplay()
   ledcAttachPin(TFT_BL, iPWM_LedChannelTFT); // TFT_BL, 0 - 15
   ledcWrite(iPWM_LedChannelTFT, 200);
 #endif
-  tft.invertDisplay(false); // Where it is true or false.  False is "normal" on this display.
-  ofr.setFontColor(TFT_WHITE, DarkerRed);  // Foreground color, Background color
+  // Where it is true or false.  False is "normal" on this display.
+  tft.invertDisplay(false);
+  // Foreground color, Background color
+  ofr.setFontColor(TFT_WHITE, DarkerRed);
 
   tft.loadFont(TimesNewRoman32Bold);
 
   scrollSprite.loadFont(TimesNewRoman32);
   clockSprite.loadFont(BritanicBold28);
 }
-/***************************************************************************/
+/**************************************************************************/
 void displayW_Header(String what)
-/***************************************************************************/
+/**************************************************************************/
 {
   tft.fillScreen(TFT_BLACK);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
 
   txtLen = tft.textWidth("Dual NTP Time");
   //  Serial.printf("Center screen: %i, txtLen: %i\r\n", iXCenter, txtLen);
-  tft.drawString("Triple NTP Time", iXCenter - txtLen / 2, iDisplayLine1 + 5);
+  tft.drawString("Triple NTP Time",
+                 iXCenter - txtLen / 2, iDisplayLine1 + 5);
 
   txtLen = tft.textWidth(sVer);
   tft.drawString(sVer, iXCenter - txtLen / 2, iDisplayLine3);
@@ -246,22 +273,27 @@ void deduceOffsets()
 {
   // Only update the TZ hourly to get the current offset and DST setting.
   // That's really more than necessary but not such a big deal.
-  // I was doing it every second.  However, it only takes 32 ms., so... no biggy.
+  // I was doing it every second.  However, it only takes 32 ms., so...
+  // No biggy.
   // It totally saves me from having to figure out DST for myself.
   // I did it once and it was NOT pretty and only applied to the U.S.!
-  // I put in the time env string and activate it then see what conditions it creates.
-  //  It gives me complete time, the time type (standard or DST) and the seconds offset.
-  //  SO much easier than trying to do all of this myself.  It takes care of changing the
-  //  time from DST to standard time and I just use that number.  Sweet!
-  //  I just have to be sure that the time is valid and I do that by being sure that the
-  //  computed year is less than or equal to my birth year (2024).
+  // I put in the time env string and activate it then see what conditions
+  //  it creates. It gives me complete time, the time type (standard or DST)
+  //  and the seconds offset. SO much easier than trying to do all of this
+  //  myself.  It takes care of changing the time from DST to standard time
+  //  and I just use that number.  Sweet!
+  //  I just have to be sure that the time is valid and I do that by being
+  //  sure that the computed year is less than or equal to my
+  //  birth year (2024).  (The program, not me!)
 
-  //  Serial.printf("Today is Julian day %i\r\n", calcJulian(iYear, iMonth, iDay));
+  //  Serial.printf("Today is Julian day %i\r\n",
+  //                calcJulian(iYear, iMonth, iDay));
 
   iStartMillis = millis();
 
   Serial.print(cTopCityname);
-  setenv("TZ", cTopTZ, 1); tzset();  // Anybody but me see how silly that 1 is?
+  // Anybody but me see how silly that 1 is?
+  setenv("TZ", cTopTZ, 1); tzset();
   time(&workTime);
   strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
   iYear = atoi(cCharWork);
@@ -269,7 +301,8 @@ void deduceOffsets()
   iMonth = atoi(cCharWork);
   strftime (cCharWork, sizeof(cCharWork), "%d", localtime(&workTime));
   iDay = atoi(cCharWork);
-  //  Serial.println(localtime(&workTime), " initial set %a, %d-%m-%Y %T %Z %z");
+  //  Serial.println(localtime(&workTime),
+  //                 " initial set %a, %d-%m-%Y %T %Z %z");
   while (iYear < 2024) {
     time(&workTime);
     strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
@@ -278,7 +311,8 @@ void deduceOffsets()
     Serial.println(localtime(&workTime), " waiting %a, %d-%m-%Y %T %Z %z");
     delay(1000);
   }
-  //  Serial.println(localtime(&workTime), " after waiting %a, %d-%m-%Y %T %Z %z");
+  //  Serial.println(localtime(&workTime),
+  //                 " after waiting %a, %d-%m-%Y %T %Z %z");
   Serial.print(localtime(&workTime), " %a, %d-%m-%Y %T %Z %z");
 
   strftime (cTopDST, 10, "%Z", localtime(&workTime));
@@ -292,7 +326,8 @@ void deduceOffsets()
   time(&workTime);
   strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
   iYear = atoi(cCharWork);
-  //  Serial.println(localtime(&workTime), " initial set %a, %d-%m-%Y %T %Z %z");
+  //  Serial.println(localtime(&workTime),
+  //                 " initial set %a, %d-%m-%Y %T %Z %z");
   while (iYear < 2024) {
     time(&workTime);
     strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
@@ -301,7 +336,8 @@ void deduceOffsets()
     Serial.println(localtime(&workTime), " waiting %a, %d-%m-%Y %T %Z %z");
     delay(1000);
   }
-  //  Serial.println(localtime(&workTime), " after waiting %a, %d-%m-%Y %T %Z %z");
+  //  Serial.println(localtime(&workTime),
+  //                 " after waiting %a, %d-%m-%Y %T %Z %z");
   Serial.print(localtime(&workTime), " %a, %d-%m-%Y %T %Z %z");
   // Characters of time zone and DST indicator.
   strftime (cBotDST, 10, "%Z", localtime(&workTime));
@@ -312,15 +348,16 @@ void deduceOffsets()
   //  Serial.print(cBotCityname);
   Serial.printf(" offset = %+i\r\n", iBotOffset);
 
-  // This must be done and must be last.  The local time(s) are based off of this.
-  //  They are not kept separately, only created when needed by adding
-  //  the offset to UTC.
+  // This must be done and must be last.  The local time(s) are
+  //  based off of this. They are not kept separately, only created
+  //  when needed by adding the offset to UTC.
   Serial.print("UTC");
   setenv("TZ", cZulu, 1); tzset();
   strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
   time(&UTC);
   iYear = atoi(cCharWork);
-  //  Serial.println(localtime(&UTC), "Zulu initial set %a, %d-%m-%Y %T %Z %z");
+  //  Serial.println(localtime(&UTC),
+  //                 "Zulu initial set %a, %d-%m-%Y %T %Z %z");
   while (iYear < 2024) {
     time(&UTC);
     strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&UTC));
@@ -328,16 +365,17 @@ void deduceOffsets()
     Serial.println(localtime(&UTC), "cZulu waiting %a, %d-%m-%Y %T %Z %z");
     delay(1000);
   }
-  //  Serial.println(localtime(&UTC), " after waiting %a, %d-%m-%Y %T %Z %z");
+  //  Serial.println(localtime(&UTC),
+  //                 " after waiting %a, %d-%m-%Y %T %Z %z");
   Serial.println(localtime(&UTC), " %a, %d-%m-%Y %T %Z %z");
 
   // It has been taking about 32-33ms to run this routine.
   //  Serial.printf("Total time for computing offsets %lu ms.\r\n",
   //                millis() - iStartMillis);
 }
-//***************************************************************************/
+//**************************************************************************/
 void startWiFiManager()
-//***startWiFiManager********************************************************/
+//***startWiFiManager*******************************************************/
 {
 
   //  wifiManager.resetSettings(); // wipe settings -- emergency use only.
@@ -354,14 +392,14 @@ void startWiFiManager()
   //    ESP.reset();
   //#endif
   //  }
-  //  // Set callback that gets called when connecting to previous WiFi fails,
-  //  //  and enters Access Point mode
-  //  wifiManager.setAPCallback(configModeCallback);
+  //  Set callback that gets called when connecting to previous WiFi fails,
+  //   and enters Access Point mode
+  //   wifiManager.setAPCallback(configModeCallback);
   //
-  //  //Fetches ssid and pass and tries to connect
-  //  //If it does not connect it starts an access point with the specified name
-  //  //here  "ESPWiFiMgr"
-  //  //and goes into a blocking loop awaiting configuration
+  //  Fetches ssid and pass and tries to connect
+  //  If it does not connect it starts an access point with the specified
+  //  name here  "ESPWiFiMgr"
+  //  and goes into a blocking loop awaiting configuration
   //  wifiManager.setDebugOutput(false);  // Quieter on the Serial Monitor
   //  if (!wifiManager.autoConnect(cMyPortalName)) {
   //    Serial.println("Failed to connect and hit timeout.");
@@ -386,7 +424,8 @@ void startWiFiManager()
 //  Serial.println(myWiFiManager->getConfigPortalSSID());
 //  int yPos = 10;
 //  tft.fillScreen(DarkerRed);
-//  tft.setTextColor(TFT_WHITE, DarkerRed);  // Foreground color, Background color
+// Foreground color, Background color
+//  tft.setTextColor(TFT_WHITE, DarkerRed);
 //  tft.drawString("Need SSID", iXCenter, yPos);
 //  tft.drawString("Connect to", iXCenter, yPos + 43);
 //  tft.drawString(cMyPortalName, iXCenter, yPos + 85);
@@ -396,7 +435,7 @@ void  startWiFi()
 /***************************************************************************/
 {
   //  WiFi.begin(ssid, wifipw);
-  //  Serial.println("Connecting WiFi");
+  //  Serial.println("Connecting to WiFi");
   //  int waitCt = 0;
   //  while (WiFi.status() != WL_CONNECTED) {
   //    Serial.print(".");
@@ -412,19 +451,23 @@ void  startWiFi()
   //  //           1111111
   //  // 01234567890123456
   //  // 84:CC:A8:47:53:98
-  //  String subS = myMACAddress.substring(   0,  2) + myMACAddress.substring(3,  5)
-  //                + myMACAddress.substring( 6,  8) + myMACAddress.substring(9, 11)
-  //                + myMACAddress.substring(12, 14) + myMACAddress.substring(15);
+  //  String subS = myMACAddress.substring(   0,  2) +
+  //                myMACAddress.substring(3,  5) +
+  //                myMACAddress.substring( 6,  8) +
+  //                myMACAddress.substring(9, 11) +
+  //                myMACAddress.substring(12, 14) +
+  //                myMACAddress.substring(15);
   //  Serial.print("Scrubbed MAC:\t");
-  //  Serial.println(subS);  // String of MAC address without the ":" characters.
+  // String of MAC address without the ":" characters.
+  //  Serial.println(subS);
 }
 /***************************************************************************/
-void StartWiFiMulti()
+void startWiFiMulti()
 /***************************************************************************/
 {
-  wifiMulti.addAP("Converge2G",  "Lallave@Family7");
-  wifiMulti.addAP("MikeysWAP",   "Noogly99");
-  Serial.print("Connecting Wifi...");
+  wifiMulti.addAP("Converge2G", "Lallave@Family7");
+  wifiMulti.addAP("MikeysWAP",  "Noogly99");
+  Serial.print("Connecting to Wifi...");
   if (wifiMulti.run() != WL_CONNECTED) {
     Serial.print("Trying again...");
     wifiMulti.run();
@@ -447,7 +490,8 @@ void StartWiFiMulti()
         + myMACAddress.substring(12, 14)
         + myMACAddress.substring(15);
     Serial.print("Scrubbed MAC:\t");
-    Serial.println(subS);  // String of MAC address without the ":" characters.
+    // String of MAC address without the ":" characters.
+    Serial.println(subS);
     delay(500);
   }
   if (wifiMulti.run() != WL_CONNECTED)
@@ -468,22 +512,33 @@ void timeSyncCallback(struct timeval *tv)
   //                             Always less than one million
   //   long int    tv_usec;
   //};
-  Serial.println("\n----Time Sync-----");
-  Serial.printf("Time sync at %u ms.\r\nUTC Epoch: ", millis());
-  Serial.println(tv->tv_sec);
+  Serial.println("\n----- Time Sync Received -----");
+  Serial.printf("Time sync at %u ms. UTC Epoch: ", millis());
+  Serial.print(tv->tv_sec); Serial.print(" - ");
   Serial.println(ctime(&tv->tv_sec));
-  delay(1000);
+  delay(100);
 }
 /****************************************************************************/
 void getXchangeRate()
 /****************************************************************************/
 {
-  //  return;  // Uncomment to deactivate XRate fetching.
+  // It is silly to fetch all night long while sleeping.  Just pause it
+  //  for a while.  It will stop with the hour shown at night and start
+  //  with the hour shown in the morning.  Right now, you can't stop after
+  //  midnight.  I have the code for that somewhere.  Will find it soon.
+
+  //  return;  // Uncomment to completely deactivate XRate fetching.
+
   bool bFetchOK;
-  unsigned long ulEntryEpoch = UTC;
-  static bool bFirstXPass = true;
-  static unsigned long ulLastXRateFetchEpoch = 0;  // 0 forces it to initialize.
-  static unsigned long ulXRateFetchInterval = 10800;  // 3 hours in seconds
+  unsigned long ulEntryUTC = UTC;
+  // If bfirstXRatePass is set to true, here, then the first fetch will be
+  //  skipped and the first attempt to fetch an XRate will be the second
+  //  entry to this routine.  If set to false, it will try to fetch on
+  //  the first entry here.
+  static bool bfirstXRatePass = true;  // False = fetch on the first entry
+  // True  = delay one 10 minute interval
+  // Now variable weekday/weekend
+  static unsigned long ulXRateFetchInterval;
   static int iLastEntryMin = -1;
   static unsigned int XR_Month, XR_DOM, XR_Year, XR_JDay;
 
@@ -492,73 +547,114 @@ void getXchangeRate()
   if (iLastEntryMin == iCurrMinute) return;  // Once per 10 minute gate.
   iLastEntryMin = iCurrMinute;
 
-  time(&UTC);
-  if (UTC > luLastXRateFetchTime + ulResetXRateTime) {  // Been too long? Data old?
-    Serial.print(localtime(&UTC), "%a %m-%d-%Y %T %Z - ");
-    Serial.println("Stale XRate cleared.");     // If yes,
-    fPHP_Rate = 0.;  // Data too old. Clear it. Zero it (will make it disappear)
-  }
-
   int currFontSize = ofr.getFontSize();
   ofr.setFontSize(38);
 
-  Serial.printf("\r\n%02i:%02i:%02i Entering X Rate fetch routine for rate update.\r\n",
+  Serial.printf("%02i:%02i:%02i Entering X Rate fetch. ",
                 iCurrHour, iCurrMinute, iCurrSecond);
 
-  if (bFirstXPass) {
-    bFirstXPass = false;
+  if (bfirstXRatePass) {
+    bfirstXRatePass = false;  // Define this as false in Definitions.h to
+    //                            not skip the first cycle.
     // The reason for delaying one cycle is to reduce the fetch count while
     //  I am working on the code.  If it is fetched every upload, it will
-    //  rip through the 250 free fetches really quickly.  So, I wait until the
-    //  next fetch window.  By then, I have either recompiled or decided to let
-    //  it run and want to do the fetch.  It could be removed if you want.
-    Serial.println("This is the initial pass, not fetching X Rate this time.");
+    //  rip through the 250 free fetches really quickly.  So, I wait until
+    //  the next fetch window.  By then, I have either recompiled or
+    //  decided to let it run and want to do the fetch.
+    //  It could be removed if you want.
+    Serial.println("\r\nThis is the initial pass, not fetching X Rate "
+                   "this time.\r\n");
   } else {
-    Serial.printf("UTC epoch now = %lu, ", ulEntryEpoch);  // UTC epoch now
-    Serial.printf("elapsed seconds: %lu/%lu.\r\n",
-                  ulEntryEpoch - ulLastXRateFetchEpoch, ulXRateFetchInterval);
+
+    //#define fetchStartHour 10  // Will start to fetch at 10:00
+    //#define fetchStopHour  23  // Will not fetch starting at 23:00
+
+    static bool doFetch;
+    if (fetchStartHour > fetchStopHour)
+      doFetch = (iCurrHour >= fetchStartHour) || (iCurrHour < fetchStopHour);
+    else
+      doFetch = (iCurrHour >= fetchStartHour) && (iCurrHour < fetchStopHour);
+
+    // Testing - Force a fetch even during "paused" hours.
+    //    doFetch = true;
+
+    if (!doFetch) {
+      Serial.printf("XRate fetching paused till %i:00.\r\n", fetchStartHour);
+      return;
+    }
+    if (iCurrDOW == 0 || iCurrDOW == 6)
+      ulXRateFetchInterval = 21600;  // Slow down to 6 hours on weekends.
+    else
+      ulXRateFetchInterval = 10800;  // 3 hour interval during the week.
+    // Let's get the seconds until the next fetch into XR_UTC.
+    XR_UTC = ulXRateFetchInterval - (ulEntryUTC - ulLastXRateFetchEpoch);
+    // Then add in UTC plus local time offset but the seconds till fetch.
+    XR_UTC = UTC + iBotOffset + XR_UTC;
+    if (XR_UTC > 100000)  // Don't show if not initialized.
+      Serial.print(localtime(&XR_UTC), "Next fetch: %c\r\n");
+    time(&UTC);
+    // Been too long? Data old?  This also runs on program startup.
+    if (UTC > luLastXRateFetchTime + ulResetXRateTime) {
+      Serial.print(localtime(&UTC),
+                   "\r\n%a %m-%d-%Y %T %Z - Stale XRate cleared.\r\n");
+      // Data too old. Clear it. Zero it (will make it disappear)
+      fPHP_Rate = 0.;
+    }
     // 1 minute of slack added, just to be sure.
-    // This is the once per 3 hour (currently) gate.
-    if ((ulEntryEpoch - ulLastXRateFetchEpoch + 60) > ulXRateFetchInterval) {
-      Serial.println("\r\nI will try an X Rate fetch now.");
-      bFetchOK = xRateWorker(1);  // Try to get the data from apilayer server.
+    // This is the once per 3/6 hour (currently) gate.
+    // The following might be backwards, the 60 might need to be after the >.
+    // Or, it might should be:
+    if ((ulEntryUTC - ulLastXRateFetchEpoch) >= ulXRateFetchInterval) {
+      //      if ((ulEntryUTC - ulLastXRateFetchEpoch + 60) >
+      //          ulXRateFetchInterval) {
+      Serial.println("I will try an X Rate fetch now.");
+      // Try to get the data from apilayer server.
+      bFetchOK = xRateWorker(1);
       if (!bFetchOK) {
-        Serial.println("\r\nFirst X Rate fetch failed, waiting 5 seconds "
-                       "for a retry. (try 2)");
+        Serial.println("First X Rate fetch failed, waiting 5 seconds "
+                       "for a retry. (try 2)\r\n");
         delay(5000);  // Wait 5 seconds and try a second time.
-        bFetchOK = xRateWorker(2);  // Try to get the data from apilayer server again.
+        // Try to get the data from apilayer server again.
+        bFetchOK = xRateWorker(2);
       }
       if (!bFetchOK) {
-        Serial.println("\r\nSecond X Rate fetch failed, waiting 5 seconds "
-                       "for final retry. (try 3)");
+        Serial.println("Second X Rate fetch failed, waiting 5 seconds "
+                       "for final retry. (try 3)\r\n");
         delay(5000);  // Wait 5 seconds and try a second time.
         // Try to get the data from apilayer server for the last time.
         bFetchOK = xRateWorker(3);
       }
       if (bFetchOK) {
-        ulLastXRateFetchEpoch = ulEntryEpoch;  // Got a live one, update timer.
-        Serial.println("\r\nXRate fetch successful.");
+        // Got a live one, update timer.
+        ulLastXRateFetchEpoch = ulEntryUTC;
+        Serial.println("XRate fetch successful.");
         int yPos = 35;
         clockSprite.fillSprite(RGB565(0, 80, 0));
         // Foreground White, Background Dark Green
         ofr.setFontColor(TFT_WHITE, RGB565(0, 80, 0));
-        //                                              ("Maximum length msg.");
-        ofr.setCursor(iXCenter, yPos);       ofr.cprintf("Exchange Rate");
-        ofr.setCursor(iXCenter, yPos + 70);  ofr.cprintf("fetch succeeded!");
-        ofr.setCursor(iXCenter, yPos + 140); ofr.cprintf("Sweet!!");
+        ofr.setCursor(iXCenter, yPos);      ofr.cprintf("Exchange Rate");
+        ofr.setCursor(iXCenter, yPos + 70); ofr.cprintf("fetch succeeded!");
+        sTemp = sFetchesLeft + "/250 left";  // i.e.,  100/250 left.
+        ofr.setCursor(iXCenter, yPos + 140);
+        ofr.cprintf(sTemp.c_str());  // ofr.cprintf("Sweet!!");
         clockSprite.pushSprite(0, 0);
-        bNewRate = true;                     // Resize sooner than next minute.
+        bNewRate = true;             // Resize sooner than next minute.
+        // Screen stolen. If graph screen shown, refresh it.
+        refreshGraph = true;
         for (i = 0; i < 2; i++) {
-          tft.invertDisplay(true); delay(200); tft.invertDisplay(false); delay(200);
-          tft.invertDisplay(true); delay(200); tft.invertDisplay(false); delay(200);
+          tft.invertDisplay(true); delay(200);
+          tft.invertDisplay(false); delay(200);
+          tft.invertDisplay(true); delay(200);
+          tft.invertDisplay(false); delay(200);
         }
-        delay(2000);
+        delay(3000);
 
         // The fetch was successful.  The new value is in fPHP_Rate.
-        /* Now, calculate today's day, month and year.  Then get the Julian day number
-            from that and record it if it is different than the last element of the
-            array after pushing down everything in the array already.  That way, we will
-            only record one value per day.
+        /* Now, calculate today's day, month and year.  Then get the
+            Julian day number from that and record it if it is different
+            than the last element of the array after pushing down
+            everything in the array already.  That way, we will only
+            record one value per day.
         */
         time(&UTC);
         timeinfo = localtime(&workTime);
@@ -566,64 +662,70 @@ void getXchangeRate()
         XR_DOM = timeinfo->tm_mday;
         XR_Year = timeinfo->tm_year + 1900;
         XR_JDay = calcJulian(XR_Year, XR_Month, XR_DOM);
+        // Note to self.  Use the returned Julian date to feed the
+        //                Gregorian conversion and compare with the
+        //                XR_ values to be sure all is in sync.
+        JulianToGregorian(XR_JDay);
         Serial.printf("Today's Julian Day is %u (%02i/%02i/%i)\r\n",
-                      XR_JDay, XR_Month, XR_DOM, XR_Year);
+                      XR_JDay, XRateMon, XRateDay, XRateYr);
 
         if (XR_JDay != XRateJulian[XRateHistLen - 1]) {
           Serial.println("New Julian day, update XRate history.");
           // New Day. Make room for the new entry.
-          for (i = 0; i < XRateHistLen - 1; i++) XRateJulian[i] = XRateJulian[i + 1];
-          XRateJulian[XRateHistLen - 1] = XR_JDay;  // Put in the new Julian day number
+          // Scoot all of the date entries left by 1.
+          for (i = 0; i < XRateHistLen - 1; i++)
+            XRateJulian[i] = XRateJulian[i + 1];
+          // Put in the new Julian day number
+          XRateJulian[XRateHistLen - 1] = XR_JDay;
 
-          // New Day. Make room for the new entry.
-          for (i = 0; i < XRateHistLen - 1; i++) XRateHist[i] = XRateHist[i + 1];
-          XRateHist[XRateHistLen - 1] = fPHP_Rate;  // Put in the XRate for today.
+          // New Day. Make room for the new XRate value.
+          for (i = 0; i < XRateHistLen - 1; i++)
+            XRateHist[i] = XRateHist[i + 1];
+          // Put in the XRate for today.
+          XRateHist[XRateHistLen - 1] = fPHP_Rate;
 
-          /* Testing  -- Show the new, current active entries in the tables*/
-          Serial.println("Current non-zero XRate history table entries.");
-          for (i = 0; i < XRateHistLen; i++) {
-            if (XRateHist[i] != 0.) {
-              JulianToGregorian(XRateJulian[i]);
-              Serial.printf("XRate for element %i value %.3f, Julian %u, %02i/%02i/%02i\r\n",
-                            i, XRateHist[i], XRateJulian[i], XRateMon, XRateDay, XRateYr);
-            }
-          }
-          /* End Testing */
+          countXRate(false, true);  // Count and print the total non-zero.
 
-          Serial.println("Updating XRate history preference entries.");
+          Serial.println("Updating XRate history entries.");
           preferences.begin("TripleTime", RW_MODE);
           preferences.putBytes("XRateHist", XRateHist, sizeof(XRateHist));
-          preferences.putBytes("XRateEpock", XRateJulian, sizeof(XRateJulian));
-          Serial.printf("There are %i entries left in TripleTime preferences storage.\r\n",
+          preferences.putBytes("XRateEpock",
+                               XRateJulian, sizeof(XRateJulian));
+          Serial.printf("There are %i entries left in preferences "
+                        "storage.\r\n",
                         preferences.freeEntries());
           preferences.end();
         } else {
           Serial.println("Already have an XRate value for today.");
+          // Count but don't show all non-zero XRate history entries.
+          countXRate(false, true);  // Count and print the total non-zero.
         }
       } else {
-        Serial.println("\r\nThird X Rate fetch failed.  Will try again in 10 minutes.");
+        Serial.println("\r\nThird X Rate fetch failed. Retry in "
+                       "10 minutes.\r\n");
         int yPos = 35;
         clockSprite.fillSprite(DarkerRed);
-        ofr.setFontColor(TFT_YELLOW, DarkerRed);  // Foreground color, Background color
-        //                                             ("Maximum length msg.");
+        // Foreground color, Background color
+        ofr.setFontColor(TFT_YELLOW, DarkerRed);
         ofr.setCursor(iXCenter, yPos);       ofr.cprintf("XRate fetch");
         ofr.setCursor(iXCenter, yPos + 70);  ofr.cprintf("failed. Retry");
         ofr.setCursor(iXCenter, yPos + 140); ofr.cprintf("in 10 minutes.");
         clockSprite.pushSprite(0, 0);
+        // Screen stolen from paused graph screen. Enable updating.
+        refreshGraph = true;
         for (i = 0; i < 2; i++) {
           tft.invertDisplay(true); delay(200);
           tft.invertDisplay(false); delay(200);
         }
         delay(2000);
       }
-      //    } else {
-      // Serial.println("Not fetching rate yet. Not long enough since last fetch.");
     }
   }
 
   ofr.setFontSize(currFontSize);
   if (iWhichClock == iDigitalClock)  // Restart the scroll with new length
     tft.fillRect(0, 0, tft.width(), iScrollSpriteH, DarkBlue);
+  //  Serial.println();
 }
 /****************************************************************************/
 bool xRateWorker(int iTry)
@@ -664,6 +766,8 @@ bool xRateWorker(int iTry)
                     iUseAPIkey + 1, sServerPath.c_str());
 
       sprintf(cCharWork, "Try %i, Key %i", iTry, iUseAPIkey + 1);
+      Serial.printf("%02i:%02i:%02i ",
+                    iCurrHour, iCurrMinute, iCurrSecond);
       Serial.println(cCharWork);
 
       int yPos = 35;
@@ -674,53 +778,74 @@ bool xRateWorker(int iTry)
       ofr.setCursor(iXCenter, yPos + 70);  ofr.cprintf("fetch X rate.");
       ofr.setCursor(iXCenter, yPos + 140); ofr.cprintf(cCharWork);
       clockSprite.pushSprite(0, 0);
+      // Screen stolen from paused graph screen. Enable updating.
+      refreshGraph = true;
 
       http.setTimeout(30000);         // Yeah, maybe...
       http.setConnectTimeout(30000);  // Yeah, maybe...
       Serial.printf("%lu - Sending message to X Rate server.\r\n", millis());
       http.begin(sServerPath.c_str());
-      Serial.printf("%lu - Message sent, issuing http.get.\r\n", millis());
+      Serial.printf("%lu - Message sent, issuing http.GET.\r\n", millis());
 
-      /* The possible headers for rates are:
+      /* The possible headers for rates are (as of 2/22/25):
           X-RateLimit-Limit-Day: nnnn
           X-RateLimit-Limit-Month: nnnn
           X-RateLimit-Remaining-Day: nnnn
           X-RateLimit-Remaining-Month: nnnn
       */
       const char *headerKeys[] = {"x-ratelimit-remaining-month"};
-      const size_t headerKeysCount = sizeof(headerKeys) / sizeof(headerKeys[0]);
+      const size_t headerKeysCount = sizeof(headerKeys) /
+                                     sizeof(headerKeys[0]);
       http.collectHeaders(headerKeys, headerKeysCount);
 
       iHttpResponseCode = http.GET();
-      Serial.printf("%lu - End sending message to X Rate server.\r\n", millis());
-      Serial.printf("HTTP.GET response code: %i\r\n", iHttpResponseCode);
+      //      Serial.printf("%lu - Message sent to X Rate server.\r\n", millis());
+      Serial.printf("%lu - http.GET response code: %i\r\n",
+                    millis(), iHttpResponseCode);
+      // 429 means that you have run out of uses of the key for this month.
+      // It is time to use a different key.  Oh, you did get two, right?
+      // If you get a -11 (timeout) code back, it may use up keys quickly so
+      //  it is good to have a backup plan -- another key.  iUseAPIkey points
+      //  to the currently active one.  Step it up on a 429 to start a
+      //  fresh key.
       if (iHttpResponseCode == 429) iUseAPIkey++;
     }
 
-    if (iHttpResponseCode == HTTPC_ERROR_CONNECTION_REFUSED) {
+    if (iHttpResponseCode == HTTPC_ERROR_CONNECTION_REFUSED)
+    {
       Serial.println("http.GET request connection refused.");
       return false;
 
-    } else if (iHttpResponseCode == 200) {  // 200 is goodness!
+    }
+    else if (iHttpResponseCode == 200) {  // 200 is goodness!
 
       // Print all headers
       int headerCount = http.headers();
-      //      Serial.printf("\r\n%i HTTP header(s) sought:\r\n", headerCount);
+      //      Serial.printf("\r\n%i HTTP header(s) sought:\r\n",
+      //                    headerCount);
       for (int i = 0; i < headerCount; i++) {
         //        Serial.println(http.header((size_t) 0));
-        sTemp = http.header((size_t) 0);
-        sTemp = sTemp.substring(0, sTemp.lastIndexOf(":"));
+        sFetchesLeft = http.header((size_t) 0);
+        sFetchesLeft = sFetchesLeft.substring(0,
+                                              sFetchesLeft.lastIndexOf(":"));
         //        Serial.printf("%s: %s gave %s\r\n",
         //                      http.headerName(i).c_str(),
-        //                      http.header(i).c_str(), sTemp);
-        Serial.printf("There are %s XRate calls left for this key"
-                      " this month.\r\n", sTemp/*, sTemp.toInt()*/);
+        //                      http.header(i).c_str(), sFetchesLeft);
+        if (sFetchesLeft == "")
+        {
+          Serial.println("No header data received for calls left value.");
+          sFetchesLeft = "n/a";
+        }
+        else
+          Serial.printf("There are %s XRate calls left for this key"
+                        " this month.\r\n", sFetchesLeft/*, sTemp.toInt()*/);
       }
-
       // Now, get the payload (the actual data I asked for).
       String payload = http.getString();
-      Serial.println("Returned data:"); Serial.print(payload);
       http.end();  // Free resources
+      Serial.printf("%02i:%02i:%02i Returned data:",
+                    iCurrHour, iCurrMinute, iCurrSecond);
+      Serial.print(payload);
       DeserializationError error = deserializeJson(doc, payload);
       if (error) {
         Serial.print("deserializeJson() failed: ");
@@ -745,8 +870,9 @@ bool xRateWorker(int iTry)
       // Assuming, for now, that the bottom clock is local time.
       long int os = iTopOffset;
 #endif
-      // Really!  Get rid of this.  Convert to what's used elsewhere in this pgm.
-      //  Then, remove the #include for timeLib.h.  Not done yet as of 6/24/23.
+      // Really!  Get rid of this.  Convert to what's used elsewhere
+      //  in this pgm. Then, remove the #include for timeLib.h.
+      //  Not done yet as of 6/24/23.
       tmElements_t tm;
       packetTime += os;
       breakTime(packetTime, tm);
@@ -760,17 +886,25 @@ bool xRateWorker(int iTry)
 
       Serial.printf("Current PHP Conversion rate %.2f\r\n", fPHP_Rate);
 #if defined CONFIG4MIKE
-      sprintf(caReadingTime, "As of %02i:%02i %s, ", iCurrHour, iCurrMinute, cBotDST);
+      sprintf(caReadingTime, "As of %02i:%02i %s, ",
+              iCurrHour, iCurrMinute, cBotDST);
 #else
-      sprintf(caReadingTime, "As of %02i:%02i %s, ", iCurrHour, iCurrMinute, cTopDST);
+      sprintf(caReadingTime, "As of %02i:%02i %s, ",
+              iCurrHour, iCurrMinute, cTopDST);
 #endif
     } else {
       bPktValidity = false;
-      Serial.printf("Bad HTTP return code %i. Exchange rate packet ignored.\r\n",
-                    iHttpResponseCode );
+      if (iHttpResponseCode == -11) {
+        Serial.printf("%lu - Bad HTTP return code %i. "
+                      "Exchange rate packet ignored.\r\n",
+                      millis(), iHttpResponseCode );
+        Serial.println("Probably timeout condition.");
+      }
+      if (iHttpResponseCode == -1)
+        Serial.println("Looks like we could not connect to the server.");
     }
   } else {
-    Serial.println("WiFi not available now. No api fetch possible");
+    Serial.println("WiFi not available now. No data fetch possible");
   }
   return bPktValidity;
 }
@@ -811,9 +945,11 @@ void initTime()
   deduceOffsets();
   time(&UTC);
 #if defined CONFIG4MIKE
-  workTime = UTC + iBotOffset;  // Assuming, for now, that the bottom clock is local time.
+  // Assuming, for now, that the bottom clock is local time.
+  workTime = UTC + iBotOffset;
 #else
-  workTime = UTC + iTopOffset;  // Assuming, for now, that the bottom clock is local time.
+  // Assuming, for now, that the bottom clock is local time.
+  workTime = UTC + iTopOffset;
 #endif
 }
 /****************************************************************************/
@@ -824,8 +960,8 @@ void allocateSprites()
 
   iRadius = min(tft.width(), tft.height()) / 2 - 1;
   // This must be allocated in PSRAM since ESP folks screwed up allocation.
-  //  There is a 32 bit and an 8 bit allocation but no 16 bit so you get double
-  //  what you need and it blows the stack!
+  //  There is a 32 bit and an 8 bit allocation but no 16 bit so you get
+  //  double what you need and it blows the stack!
 
   // Leave room for 1st sprite
   a = (int*)clockSprite.createSprite(tft.width(), tft.height());
@@ -855,14 +991,21 @@ void allocateSprites()
 
   scrollSprite.fillSprite(DarkBlue);
   scrollSprite.setTextColor(TFT_WHITE, DarkBlue);
+
+  a = (int*)XRateSprite.createSprite(tft.width(), tft.height());
+  if (a == 0) {
+    Serial.println("XRateSprite creation failed.  Cannot continue.");
+    spriteAllocError("XRateSprite");
+    while (1) ArduinoOTA.handle();
+  }
+  Serial.printf("createXRateGraphSprite returned: %p\r\n", a);
+
   Serial.printf("Analog clock radius is %i\r\n", iRadius);
 }
 /***************************************************************************/
 void spriteAllocError(String which)
 /***************************************************************************/
 {
-  //  Serial.println(which);
-
   tft.fillScreen(TFT_BLACK);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
 
@@ -876,7 +1019,8 @@ void spriteAllocError(String which)
   tft.drawString("Got PSRAM?", iXCenter - txtLen / 2, iDisplayLine5);
 
   txtLen = tft.textWidth("OTA is Available");
-  tft.drawString("OTA is Available", iXCenter - txtLen / 2, iDisplayLine5 + 40);
+  tft.drawString("OTA is Available",
+                 iXCenter - txtLen / 2, iDisplayLine5 + 40);
 
   while (1) ArduinoOTA.handle();
 }
