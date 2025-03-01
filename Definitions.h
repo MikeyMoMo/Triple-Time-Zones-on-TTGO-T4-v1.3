@@ -150,15 +150,15 @@ const char * cAPI_Array[] = {
   //  you go over on your first key.  It will automatically switch to the
   //  backup key when it detects that the primary key is exhausted.
 #if defined CONFIG4MIKE
-  "yoJP5mfGfTMzdcRD535utiKqXP9iL91m",  // LaoagMikey key
-  "OvRWMRoM1kfqNNy6Mcp3bOi8ULm7bDC4",  // BanguiMikey key (Mike Staples)
-  "gs2IkNdDcZMjmlCsfFn3PFPkBBquhu82",  // Joe 1
-  "23TJj8EbyRWec1MPBECv5kLI7zAZNh3C",  // Joe 2
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 1
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 2
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 3
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 4
 #else
-  "23TJj8EbyRWec1MPBECv5kLI7zAZNh3C",  // Joe 2
-  "gs2IkNdDcZMjmlCsfFn3PFPkBBquhu82",  // Joe 1
-  "OvRWMRoM1kfqNNy6Mcp3bOi8ULm7bDC4",  // BanguiMikey key (Mike Staples)
-  "Cg7HVgyG4LQhsVnZOvVCojvKFNVjjYD1",  // LaoagMikey key
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 4
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 3
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 2
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 1
 #endif
 };
 
