@@ -31,8 +31,6 @@ void showXGraph()
       just make the following define a little bigger (or smaller) to your
       liking.
   */
-  // How many columns to skip before adding another date.
-#define DROP_DATE_EVERY 50
 
   if (refreshGraph) {
     iStartMillis = millis();  // Time this sucker!
@@ -48,11 +46,12 @@ void showXGraph()
     int halfLegend = XRateSprite.textWidth(legend, 2) / 2;
 
     countXRate(false, false);  // Count and print the total non-zero.
+    
     // Find the highest and lowest values in the array.
     for (int i = XRateHistLen - tft.width() + graphLeftMargin;
          i < XRateHistLen; i++)
     {
-      if (XRateHist[i] > 0)  // Exclude 0's from being the yLow winner.
+      if (XRateHist[i] > 0.)  // Exclude 0's from being the yLow winner.
       {
         if (dropDate < 0) dropDate = i ;
         if (XRateHist[i] < yLow) yLow = XRateHist[i];
@@ -61,6 +60,7 @@ void showXGraph()
     }
     Serial.printf("Actual high & low %.2f & %.2f, ",
                   yHigh, yLow); Serial.flush();
+    
     // Using ceil and floor can leave too much border.
     // Leave a small border hi & lo.
     // yHigh = ceil(yHigh); yLow = floor(yLow);
@@ -92,7 +92,7 @@ void showXGraph()
                             (yRange * 100.);
 
 #if defined FILL_GRAPH
-    //--------------> Now, draw the drop lines on the graph (if requested) 
+    //--------------> Now, draw the drop lines on the graph (if requested)
     //                 and the dates.
     // A double pass is done so the lines will not overdraw the dots.
 
@@ -110,7 +110,7 @@ void showXGraph()
       {
         thisY = (yHigh - XRateHist[i]) * pixelsPerHundredthV * 100.;
         // Less code that putting this in an }else{ clause.
-        dropColor = DarkerGreen;  
+        dropColor = DarkerGreen;
         if (i == dropDate) {
           dropColor = TFT_YELLOW;
           iSavDatum = XRateSprite.getTextDatum();
@@ -120,13 +120,18 @@ void showXGraph()
           XRateSprite.drawString(String(XRateMon) + "/" + String(XRateDay),
                                  thisX, tft.height() - graphFloorMargin + 3,
                                  2);  // Use font 2 (quite small).
+          XRateSprite.drawLine(thisX, tft.height() - graphFloorMargin - 1,
+                               thisX, thisY, dropColor);
+
           XRateSprite.setTextDatum(iSavDatum);
           dropDate += DROP_DATE_EVERY;
         }
-//        Serial.printf("Line i %i, thisX %i, thisY %i\r\n",
-//                      i, thisX, thisY);
+        // Serial.printf("Line i %i, thisX %i, thisY %i\r\n",
+        //               i, thisX, thisY);
+#if defined COLOR_FILL_GRAPH
         XRateSprite.drawLine(thisX, tft.height() - graphFloorMargin - 1,
                              thisX, thisY, dropColor);
+#endif
       }
       thisX++; i++;  // Move to next pixel and XRate array entries.
     }
@@ -134,28 +139,15 @@ void showXGraph()
 
     //--------------> Now, draw the dots on the graph.
     // A double pass is done so the lines will not overdraw the dots.
-    // For this graph, I am only the dots so they will appear on top 
+    // For this graph, I am only the dots so they will appear on top
     // of the lines.
 
     thisX = graphLeftMargin;
 
-    // I plot one dot per pixel column.  That makes a bar graph.
-    i = XRateHistLen - tft.width() + graphLeftMargin;
-    while (i < XRateHistLen) {
-      if (XRateHist[i] > 0)
-      {
-        thisY = (yHigh - XRateHist[i]) * pixelsPerHundredthV * 100.;
-//        Serial.printf("Circle i %i, thisX %i, thisY %i\r\n",
-//                      i, thisX, thisY);
-//        XRateSprite.drawSpot(thisX, thisY, 2, TFT_WHITE, TFT_BLACK);
-        XRateSprite.fillCircle(thisX, thisY, 2, TFT_WHITE);
-      }
-      thisX++; i++;  // Move to next pixel and XRate array entries.
-    }
-
     // Decorations part 2
     XRateSprite.setTextDatum(BR_DATUM);
-    drawYAxisScaleLines(.5, yLow, yRange);
+    drawYAxisScaleLines(.333, yLow, yRange);
+    drawYAxisScaleLines(.666, yLow, yRange);
     XRateSprite.setTextColor(TFT_YELLOW, TFT_BLACK);
     XRateSprite.drawString(String(yHigh, 2),
                            graphLeftMargin - 2, 10, 2);
@@ -172,6 +164,18 @@ void showXGraph()
       XRateSprite.drawString(cCharWork, graphLeftMargin + 10, 20, 4);
       //      XRateSprite.setTextDatum(iSavDatum);
     }
+    // I plot one dot per pixel column.  That makes a bar graph.
+    i = XRateHistLen - tft.width() + graphLeftMargin;
+    while (i < XRateHistLen) {
+      if (XRateHist[i] > 0)
+      {
+        thisY = (yHigh - XRateHist[i]) * pixelsPerHundredthV * 100.;
+        XRateSprite.fillCircle(thisX, thisY, 2, TFT_WHITE);
+      }
+      thisX++; i++;  // Move to next pixel and XRate array entries.
+    }
+    XRateSprite.fillCircle(thisX, thisY, 5, TFT_RED);
+
     XRateSprite.pushSprite(0, 0);  // As the teacher says... SHOW YOUR WORK!
     Serial.printf("Graph routine took %lu ms.\r\n",
                   millis() - iStartMillis); Serial.flush();

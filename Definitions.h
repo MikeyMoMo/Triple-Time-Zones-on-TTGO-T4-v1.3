@@ -15,6 +15,12 @@
 // If defined, show the modern wedge hands (slower but looks nice).
 #define WEDGE_HANDS
 
+#define DROP_DATE_EVERY 50  // How many days to skip on the graph before showing date.
+
+// Note: The color lines for the date will always be drawn.  This controls the rest
+//       of the color lines up to the spot.
+#define COLOR_FILL_GRAPH    // If defined, draw colored lines up to the dot.
+
 #define myName "Triple sNTP Time "         // Version for T4 v1.3
 String OTAhostname = "ESP32 Triple Time";  // For OTA identification/upload.
 
@@ -50,7 +56,7 @@ OpenFontRender ofr;
 //  for a while.  It will stop with the hour shown at night and start
 //  with the hour shown in the morning.  Right now, you can't stop after
 //  midnight.  I have the code for that somewhere.  Will find it soon.
-unsigned long ulLastXRateFetchEpoch; // Epoch time of last fetch.
+//unsigned long ulLastXRateFetchEpoch; // Epoch time of last fetch.
 
 // To NOT pause XRate fething and continue getting XRate every 3 hours,
 //  search for: "if (!doFetch) {" if the void getXchangeRate() routine 
@@ -150,15 +156,15 @@ const char * cAPI_Array[] = {
   //  you go over on your first key.  It will automatically switch to the
   //  backup key when it detects that the primary key is exhausted.
 #if defined CONFIG4MIKE
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 1
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 2
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 3
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 4
+  "yoJP5mfGfTMzdcRD535utiKqXP9iL91m",  // LaoagMikey key
+  "OvRWMRoM1kfqNNy6Mcp3bOi8ULm7bDC4",  // BanguiMikey key (Mike Staples)
+  "gs2IkNdDcZMjmlCsfFn3PFPkBBquhu82",  // Joe 1
+  "23TJj8EbyRWec1MPBECv5kLI7zAZNh3C",  // Joe 2
 #else
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 4
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 3
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 2
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // api key 1
+  "23TJj8EbyRWec1MPBECv5kLI7zAZNh3C",  // Joe 2
+  "gs2IkNdDcZMjmlCsfFn3PFPkBBquhu82",  // Joe 1
+  "OvRWMRoM1kfqNNy6Mcp3bOi8ULm7bDC4",  // BanguiMikey key (Mike Staples)
+  "Cg7HVgyG4LQhsVnZOvVCojvKFNVjjYD1",  // LaoagMikey key
 #endif
 };
 
@@ -176,7 +182,7 @@ int iScrollSpriteW, iScrollSpriteH;
 //  you really know what you are doing!
 const int iPWM_Freq = 5000;
 const int iPWM_Resolution = 8;
-const int iPWM_LedChannelTFT = 4;
+//const int iPWM_LedChannelTFT = 4;
 
 // Startup TFT backlight intensity on a scale of 0 to 255.
 const int ledBacklightFull = 255;
@@ -241,7 +247,7 @@ int    iRadius;
 
 double dAngle;
 float  fPHP_Rate = 0.;
-long   unsigned luLastXRateFetchTime = 0;
+long   unsigned ulLastXRateFetchEpoch = 0;  // Epoch time of last fetch.
 long   unsigned iStartMillis;
 
 char   caReadingTime[50];  // For current exchange rate reading.

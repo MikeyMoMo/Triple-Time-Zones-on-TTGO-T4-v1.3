@@ -6,7 +6,7 @@ void countXRate(bool printList, bool printTot)
   if (printList)
     Serial.println("Current non-zero XRate history table entries.");
   for (i = 0; i < XRateHistLen; i++) {
-    if (XRateHist[i] != 0.) {
+    if (XRateHist[i] > 0.) {
       if (printList) {
         // Sets XRateMon, XRateDay & XRateYr.
         JulianToGregorian(XRateJulian[i]);
@@ -19,7 +19,7 @@ void countXRate(bool printList, bool printTot)
     }
   }
   if (printTot)
-    Serial.printf("There are %i saved daily rates\r\n\r\n", totXRatesaved);
+    Serial.printf("There are %i saved daily rates\r\n", totXRatesaved);
 }
 /***************************************************************************/
 int DaysInMonth(int iYear, int iMonth)
@@ -234,9 +234,14 @@ void initDisplay()
 
   tft.fillScreen(TFT_BLACK);
 #if defined TFT_BL
-  ledcSetup(iPWM_LedChannelTFT, iPWM_Freq, iPWM_Resolution);
-  ledcAttachPin(TFT_BL, iPWM_LedChannelTFT); // TFT_BL, 0 - 15
-  ledcWrite(iPWM_LedChannelTFT, 200);
+  // This is for boards definitions 2.x.x
+  //  ledcSetup(iPWM_LedChannelTFT, iPWM_Freq, iPWM_Resolution);
+  //  ledcAttachPin(TFT_BL, iPWM_LedChannelTFT); // TFT_BL, 0 - 15
+  //  ledcWrite(iPWM_LedChannelTFT, 200);
+  // This is for boards definitions 3.x.x
+  ledcAttach(TFT_BL, iPWM_Freq, iPWM_Resolution);
+  ledcWrite(TFT_BL, 200);  // Get the display on for init messages.
+
 #endif
   // Where it is true or false.  False is "normal" on this display.
   tft.invertDisplay(false);
@@ -252,6 +257,7 @@ void initDisplay()
 void displayW_Header(String what)
 /**************************************************************************/
 {
+  Serial.println(what);
   tft.fillScreen(TFT_BLACK);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
 
@@ -467,14 +473,14 @@ void startWiFiMulti()
 {
   wifiMulti.addAP("Converge2G", "Lallave@Family7");
   wifiMulti.addAP("MikeysWAP",  "Noogly99");
-  Serial.print("Connecting to Wifi...");
+  //  Serial.print("Connecting to WifiMulti...");
   if (wifiMulti.run() != WL_CONNECTED) {
     Serial.print("Trying again...");
     wifiMulti.run();
     delay(15000);
   }
   if (wifiMulti.run() == WL_CONNECTED) {
-    Serial.print("\r\nHost:\t\t"); Serial.println(WiFi.SSID());
+    Serial.print("Host:\t\t"); Serial.println(WiFi.SSID());
     Serial.print("IP Address:\t"); Serial.println(WiFi.localIP());
     Serial.print("Wifi RSSI =\t"); Serial.println(WiFi.RSSI());
     String myMACAddress = WiFi.macAddress();
@@ -527,7 +533,7 @@ void getXchangeRate()
   //  with the hour shown in the morning.  Right now, you can't stop after
   //  midnight.  I have the code for that somewhere.  Will find it soon.
 
-  //  return;  // Uncomment to completely deactivate XRate fetching.
+  // return;  // Uncomment to completely deactivate XRate fetching.
 
   bool bFetchOK;
   unsigned long ulEntryUTC = UTC;
@@ -535,7 +541,7 @@ void getXchangeRate()
   //  skipped and the first attempt to fetch an XRate will be the second
   //  entry to this routine.  If set to false, it will try to fetch on
   //  the first entry here.
-  static bool bfirstXRatePass = true;  // False = fetch on the first entry
+  static bool bfirstXRatePass = false;  // False = fetch on the first entry
   // True  = delay one 10 minute interval
   // Now variable weekday/weekend
   static unsigned long ulXRateFetchInterval;
@@ -587,14 +593,25 @@ void getXchangeRate()
     else
       ulXRateFetchInterval = 10800;  // 3 hour interval during the week.
     // Let's get the seconds until the next fetch into XR_UTC.
+    Serial.printf("ulXRateFetchInterval %lu, ulEntryUTC %lu, ulLastXRateFetchEpoch %lu\r\n",
+                  ulXRateFetchInterval, ulEntryUTC, ulLastXRateFetchEpoch);
     XR_UTC = ulXRateFetchInterval - (ulEntryUTC - ulLastXRateFetchEpoch);
     // Then add in UTC plus local time offset but the seconds till fetch.
+
+    Serial.printf("XR_UTC %lu, UTC %lu, iBotOffset %lu\r\n",
+                  XR_UTC, UTC, iBotOffset);
+
     XR_UTC = UTC + iBotOffset + XR_UTC;
+
+    Serial.printf("XR_UTC %lu, UTC %lu, iBotOffset %lu\r\n",
+                  XR_UTC, UTC, iBotOffset);
+                  
     if (XR_UTC > 100000)  // Don't show if not initialized.
       Serial.print(localtime(&XR_UTC), "Next fetch: %c\r\n");
     time(&UTC);
     // Been too long? Data old?  This also runs on program startup.
-    if (UTC > luLastXRateFetchTime + ulResetXRateTime) {
+    if (UTC > ulLastXRateFetchEpoch + ulResetXRateTime) {
+      //      ulLastXRateFetchEpoch
       Serial.print(localtime(&UTC),
                    "\r\n%a %m-%d-%Y %T %Z - Stale XRate cleared.\r\n");
       // Data too old. Clear it. Zero it (will make it disappear)
@@ -689,8 +706,7 @@ void getXchangeRate()
           Serial.println("Updating XRate history entries.");
           preferences.begin("TripleTime", RW_MODE);
           preferences.putBytes("XRateHist", XRateHist, sizeof(XRateHist));
-          preferences.putBytes("XRateEpock",
-                               XRateJulian, sizeof(XRateJulian));
+          preferences.putBytes("XRateJulian", XRateJulian, sizeof(XRateJulian));
           Serial.printf("There are %i entries left in preferences "
                         "storage.\r\n",
                         preferences.freeEntries());
@@ -882,7 +898,7 @@ bool xRateWorker(int iTry)
                     tm.Hour, tm.Minute, tm.Second);
       fPHP_Rate = doc["rates"]["PHP"];
       time(&UTC);
-      luLastXRateFetchTime = UTC;
+      ulLastXRateFetchEpoch = UTC;
 
       Serial.printf("Current PHP Conversion rate %.2f\r\n", fPHP_Rate);
 #if defined CONFIG4MIKE
@@ -926,13 +942,16 @@ void initTime()
   displayW_Header("Waiting for right time");
   //  Serial.println("Waiting for correct time...");
 
+  //  Serial.printf("Incoming epoch: %lu\r\n", workTime);
   strftime(cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
   iYear = atoi(cCharWork);
+  //  Serial.printf("0 iYear %i\r\n", iYear);
   int iLooper = 0;
   while (iYear < 2024) {
     time(&UTC);
     strftime (cCharWork, 100, "%Y", localtime(&UTC));
     iYear = atoi(cCharWork);
+    //    Serial.printf("1 iYear %i\r\n", iYear);
     Serial.println(localtime(&UTC), "UTC %a %m-%d-%Y %T");
     if (iLooper++ > 30) {
       Serial.println("Cannot get time set. Rebooting.");
