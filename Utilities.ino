@@ -241,7 +241,6 @@ void initDisplay()
   // This is for boards definitions 3.x.x
   ledcAttach(TFT_BL, iPWM_Freq, iPWM_Resolution);
   ledcWrite(TFT_BL, 200);  // Get the display on for init messages.
-
 #endif
   // Where it is true or false.  False is "normal" on this display.
   tft.invertDisplay(false);
@@ -533,7 +532,7 @@ void getXchangeRate()
   //  with the hour shown in the morning.  Right now, you can't stop after
   //  midnight.  I have the code for that somewhere.  Will find it soon.
 
-  // return;  // Uncomment to completely deactivate XRate fetching.
+  //   return;  // Uncomment to completely deactivate XRate fetching.
 
   bool bFetchOK;
   unsigned long ulEntryUTC = UTC;
@@ -556,8 +555,8 @@ void getXchangeRate()
   int currFontSize = ofr.getFontSize();
   ofr.setFontSize(38);
 
-  Serial.printf("%02i:%02i:%02i Entering X Rate fetch. ",
-                iCurrHour, iCurrMinute, iCurrSecond);
+  //  Serial.printf("%02i:%02i:%02i Entering X Rate fetch. ",
+  //                iCurrHour, iCurrMinute, iCurrSecond);
 
   if (bfirstXRatePass) {
     bfirstXRatePass = false;  // Define this as false in Definitions.h to
@@ -593,25 +592,26 @@ void getXchangeRate()
     else
       ulXRateFetchInterval = 10800;  // 3 hour interval during the week.
     // Let's get the seconds until the next fetch into XR_UTC.
-    Serial.printf("ulXRateFetchInterval %lu, ulEntryUTC %lu, ulLastXRateFetchEpoch %lu\r\n",
-                  ulXRateFetchInterval, ulEntryUTC, ulLastXRateFetchEpoch);
+    // Serial.printf("ulXRateFetchInterval %lu, ulEntryUTC %lu,
+    //               ulLastXRateFetchEpoch %lu\r\n",
+    //               ulXRateFetchInterval, ulEntryUTC, ulLastXRateFetchEpoch);
     XR_UTC = ulXRateFetchInterval - (ulEntryUTC - ulLastXRateFetchEpoch);
     // Then add in UTC plus local time offset but the seconds till fetch.
 
-    Serial.printf("XR_UTC %lu, UTC %lu, iBotOffset %lu\r\n",
-                  XR_UTC, UTC, iBotOffset);
+    //    Serial.printf("XR_UTC %lu, UTC %lu, iBotOffset %lu\r\n",
+    //                  XR_UTC, UTC, iBotOffset);
 
     XR_UTC = UTC + iBotOffset + XR_UTC;
 
-    Serial.printf("XR_UTC %lu, UTC %lu, iBotOffset %lu\r\n",
-                  XR_UTC, UTC, iBotOffset);
-                  
-    if (XR_UTC > 100000)  // Don't show if not initialized.
+    // Serial.printf("XR_UTC %lu, UTC %lu, iBotOffset %lu\r\n",
+    //               XR_UTC, UTC, iBotOffset);
+
+    if (XR_UTC > 100000)  // Don't show if not initialized (still 0).
       Serial.print(localtime(&XR_UTC), "Next fetch: %c\r\n");
+      
     time(&UTC);
     // Been too long? Data old?  This also runs on program startup.
     if (UTC > ulLastXRateFetchEpoch + ulResetXRateTime) {
-      //      ulLastXRateFetchEpoch
       Serial.print(localtime(&UTC),
                    "\r\n%a %m-%d-%Y %T %Z - Stale XRate cleared.\r\n");
       // Data too old. Clear it. Zero it (will make it disappear)
@@ -703,19 +703,45 @@ void getXchangeRate()
 
           countXRate(false, true);  // Count and print the total non-zero.
 
-          Serial.println("Updating XRate history entries.");
+          Serial.println("Saving XRate history in NVS flash entries. (New)");
           preferences.begin("TripleTime", RW_MODE);
           preferences.putBytes("XRateHist", XRateHist, sizeof(XRateHist));
-          preferences.putBytes("XRateJulian", XRateJulian, sizeof(XRateJulian));
+          preferences.putBytes("XRateJulian", XRateJulian,
+                               sizeof(XRateJulian));
           Serial.printf("There are %i entries left in preferences "
                         "storage.\r\n",
                         preferences.freeEntries());
           preferences.end();
         } else {
-          Serial.println("Already have an XRate value for today.");
+          // Serial.println("Already have an XRate value for today.");
+          // Serial.printf("Old Close %.2f, Older Close %.2f, New %.2f\r\n",
+          //               XRateHist[XRateHistLen - 1],
+          //               XRateHist[XRateHistLen - 2],
+          //               fPHP_Rate);
+          // Put in the latest XRate for today.
+          if (fabs(XRateHist[XRateHistLen - 1] - fPHP_Rate) > .15) {
+            Serial.println("Saving XRate history in NVS flash entries. "
+                           "(Change)");
+            preferences.begin("TripleTime", RW_MODE);
+            preferences.putBytes("XRateHist", XRateHist, sizeof(XRateHist));
+            preferences.putBytes("XRateJulian", XRateJulian,
+                                 sizeof(XRateJulian));
+            Serial.printf("There are %i entries left in preferences "
+                          "storage.\r\n",
+                          preferences.freeEntries());
+            preferences.end();
+          }
+          Serial.println("Updating to latest XRate value for today.");
+          // Update value in RAM array.
+          XRateHist[XRateHistLen - 1] = fPHP_Rate;
           // Count but don't show all non-zero XRate history entries.
           countXRate(false, true);  // Count and print the total non-zero.
         }
+        Serial.printf("Old Close %.2f, Older Close %.2f, New %.2f\r\n",
+                      XRateHist[XRateHistLen - 1],
+                      XRateHist[XRateHistLen - 2],
+                      fPHP_Rate);
+
       } else {
         Serial.println("\r\nThird X Rate fetch failed. Retry in "
                        "10 minutes.\r\n");
@@ -815,7 +841,7 @@ bool xRateWorker(int iTry)
       http.collectHeaders(headerKeys, headerKeysCount);
 
       iHttpResponseCode = http.GET();
-      //      Serial.printf("%lu - Message sent to X Rate server.\r\n", millis());
+      // Serial.printf("%lu - Message sent to X Rate server.\r\n", millis());
       Serial.printf("%lu - http.GET response code: %i\r\n",
                     millis(), iHttpResponseCode);
       // 429 means that you have run out of uses of the key for this month.
@@ -937,7 +963,7 @@ void initTime()
 {
   sntp_set_sync_interval(86400000);  // 1 day in ms.
   sntp_set_time_sync_notification_cb(timeSyncCallback);
-  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+  configTime(0, 0, "oceania.pool.ntp.org", "time.nist.gov");
   setenv("TZ", cZulu, 1); tzset();
   displayW_Header("Waiting for right time");
   //  Serial.println("Waiting for correct time...");
@@ -989,7 +1015,7 @@ void allocateSprites()
     spriteAllocError("clockSprite");
     while (1) ArduinoOTA.handle();
   }
-  Serial.printf("createclockSprite returned: %p\r\n", a);
+  //  Serial.printf("createclockSprite returned: %p\r\n", a);
 
   // 1st sprite for scrolling info
   a = (int*)scrollSprite.createSprite(iScrollSpriteW, iScrollSpriteH);
@@ -998,7 +1024,7 @@ void allocateSprites()
     spriteAllocError("scrollSprite");
     while (1) ArduinoOTA.handle();
   }
-  Serial.printf("createscrollSprite returned: %p\r\n", a);
+  //  Serial.printf("createscrollSprite returned: %p\r\n", a);
 
   a = (int*)digitalSprite.createSprite(tft.width(), tft.height());
   if (a == 0) {
@@ -1006,7 +1032,7 @@ void allocateSprites()
     spriteAllocError("digitalSprite");
     while (1) ArduinoOTA.handle();
   }
-  Serial.printf("createDigitalSprite returned: %p\r\n", a);
+  //  Serial.printf("createDigitalSprite returned: %p\r\n", a);
 
   scrollSprite.fillSprite(DarkBlue);
   scrollSprite.setTextColor(TFT_WHITE, DarkBlue);
@@ -1017,7 +1043,7 @@ void allocateSprites()
     spriteAllocError("XRateSprite");
     while (1) ArduinoOTA.handle();
   }
-  Serial.printf("createXRateGraphSprite returned: %p\r\n", a);
+  //  Serial.printf("createXRateGraphSprite returned: %p\r\n", a);
 
   Serial.printf("Analog clock radius is %i\r\n", iRadius);
 }
@@ -1042,4 +1068,96 @@ void spriteAllocError(String which)
                  iXCenter - txtLen / 2, iDisplayLine5 + 40);
 
   while (1) ArduinoOTA.handle();
+}
+/***************************************************************************/
+void drawGradientLine(TFT_eSprite *targetSprite,
+                      int x1, int y1, int x2, int y2,
+                      int blendLvls, uint16_t colorStart, uint16_t colorEnd)
+/***************************************************************************/
+{
+  static int x, y, steps;
+
+  // The 6th value (steps) changes the look of the gradient line.
+  //  If it is 0, the gradient is completed along the length of the
+  //  line no matter how long or short.  If there is a value here, its
+  //  value is used for all lines. This gives a more regular look
+  //  to the gradient lines.
+
+  // steps is the length of the line in pixels.
+  steps = abs(x2 - x1) > abs(y2 - y1) ? abs(x2 - x1) : abs(y2 - y1);
+  // if blandLvls came in as 0, use the line pixel length for step count
+  if (blendLvls == 0) blendLvls = steps;
+  if (blendLvls < steps) {
+    Serial.printf("BlendLvls (%i px) is less than line length "
+                  "(%i px). Please correct and recompile.\r\n",
+                  blendLvls, steps);
+  }
+  // Serial.printf("x1 % i, y1 % i, x2 % i, y2 % i, "
+  //               "steps % i, blendLvls % i\r\n",
+  //               x1, y2, x2, y1, steps, blendLvls);
+  x = x1; y = y1;
+  for (int i = 0; i <= steps; i++) {
+    pctBlend = (float)i / (float)blendLvls;
+    blendedColor = alphaBlend((uint8_t)(pctBlend * 255),
+                              colorStart, colorEnd);
+    targetSprite->drawPixel(x, y, blendedColor);
+
+    if ((x1 - x2) == 0) y2 > y1 ? y++ : y--;  // Am I drawing horizontal or
+    if ((y1 - y2) == 0) x2 > x1 ? x++ : x--;  // vertical. This decides.
+
+  }
+}
+/***************************************************************************/
+uint16_t alphaBlend(uint8_t alpha, uint16_t fgc, uint16_t bgc)
+/***************************************************************************/
+{
+  uint32_t rxb = bgc & 0xF81F;
+  rxb += ((fgc & 0xF81F) - rxb) * (alpha >> 2) >> 6;
+  uint32_t xgx = bgc & 0x07E0;
+  xgx += ((fgc & 0x07E0) - xgx) * alpha >> 8;
+  return (rxb & 0xF81F) | (xgx & 0x07E0);
+}
+/***************************************************************************/
+void drawArrowLine(TFT_eSPI* targetPallete,  // where line and arrow goes.
+                   // Line start and end x & y
+                   int x0, int y0, int x1, int y1,
+                   // Line color.
+                   uint16_t lineColor,
+                   // Length of the little winglets to make the arrow.
+                   int arrowLength,
+                   // Angle away from the line for the two winglets.
+                   float arrowAngle,  // 30º (PI / 6) looks good.
+                   // Color of the 2 or 3 arrow builder lines.
+                   uint16_t arrowColor,
+                   // Do or do not draw back (3rd) line on arrow.
+                   bool drawBackLine,
+                   // Do or do not fill in the triangle with arrow color.
+                   bool fillTheTriangle)
+/***************************************************************************/
+{
+  static float angle;
+  static int x2, y2, x3, y3;
+
+  // Draw main line
+  targetPallete->drawLine(x0, y0, x1, y1, lineColor);
+  // Determine the angle of the original line.
+  angle = atan2(y1 - y0, x1 - x0);
+
+  // Calculate arrowhead lines length and angles
+  // The arrowhead lines angles are offset by the original line angle.
+  x2 = x1 - arrowLength * cos(angle - arrowAngle);
+  y2 = y1 - arrowLength * sin(angle - arrowAngle);
+  x3 = x1 - arrowLength * cos(angle + arrowAngle);
+  y3 = y1 - arrowLength * sin(angle + arrowAngle);
+
+  if (fillTheTriangle) {
+    targetPallete->fillTriangle(x1, y1, x2, y2, x3, y3, arrowColor);
+  } else {
+    // Draw arrowhead
+    targetPallete->drawLine(x1, y1, x2, y2, arrowColor);
+    targetPallete->drawLine(x1, y1, x3, y3, arrowColor);
+    // Do you want the back line (3rd line) to complete the arrow?
+    if (drawBackLine) targetPallete->drawLine(x2, y2, x3, y3, arrowColor);
+    // Do you want the triangle filled with the triangle line color?
+  }
 }

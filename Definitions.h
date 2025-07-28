@@ -122,7 +122,8 @@ bool bNewRate = false;  // New rate fetched.  Maybe need to resize scrollSprite
 unsigned int uiShowSecondHandBit = 2;  // bit shift amount for this option
 unsigned long secStartMillis;  // millis() when this second started.
 int  iYear, iMonth, iDay, iTopOffset, iBotOffset, iTempOffset;
-int  iPrevHour = -1, iCurrMinute = -1, iPrevSecond = -1, i;
+int  iPrevHour = -1, iPrevSecond = -1, i;
+int  iCurrMinute = -1, iPrevMinute = 100;
 int  iCurrHour, iCurrSecond = -1, iCurrDay, iCurrDOW, iPrevDay = -1;
 //long int liFirstHeapSize = 0, lLastHeapSize;
 int txtLen;
@@ -156,15 +157,15 @@ const char * cAPI_Array[] = {
   //  you go over on your first key.  It will automatically switch to the
   //  backup key when it detects that the primary key is exhausted.
 #if defined CONFIG4MIKE
-  "",  // LaoagMikey api key
-  "",  // BanguiMikey api key (Mike Staples)
-  "",  // Joe 1 api key
-  "",  // Joe 2 api key
+  "yoJP5mfGfTMzdcRD535utiKqXP9iL91m",  // LaoagMikey key
+  "OvRWMRoM1kfqNNy6Mcp3bOi8ULm7bDC4",  // BanguiMikey key (Mike Staples)
+  "gs2IkNdDcZMjmlCsfFn3PFPkBBquhu82",  // Joe 1
+  "23TJj8EbyRWec1MPBECv5kLI7zAZNh3C",  // Joe 2
 #else
-  "",  // Joe 2 api key
-  "",  // Joe 1 api key
-  "",  // BanguiMikey api key (Mike Staples)
-  "",  // LaoagMikey api key
+  "23TJj8EbyRWec1MPBECv5kLI7zAZNh3C",  // Joe 2
+  "gs2IkNdDcZMjmlCsfFn3PFPkBBquhu82",  // Joe 1
+  "OvRWMRoM1kfqNNy6Mcp3bOi8ULm7bDC4",  // BanguiMikey key (Mike Staples)
+  "Cg7HVgyG4LQhsVnZOvVCojvKFNVjjYD1",  // LaoagMikey key
 #endif
 };
 
@@ -177,6 +178,8 @@ TFT_eSprite digitalSprite = TFT_eSprite(&tft);
 TFT_eSprite XRateSprite   = TFT_eSprite(&tft);
 
 int iScrollSpriteW, iScrollSpriteH;
+float  pctBlend;
+uint16_t blendedColor;
 
 // Setting PWM properties, do not change these 3 lines, please, unless
 //  you really know what you are doing!
