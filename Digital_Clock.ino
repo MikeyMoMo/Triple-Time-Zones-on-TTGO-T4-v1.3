@@ -140,6 +140,7 @@ void scrollIt()
                        "Cannot continue.");
         while (1);
       }
+      scrollSprite.fillSprite(DarkBlue);
       tft.fillRect(0, 0, tft.width(), iScrollSpriteH, DarkBlue);
       // Restart from the right to avoid an irritating jump in the sprite.
       msg1Head = tft.width();

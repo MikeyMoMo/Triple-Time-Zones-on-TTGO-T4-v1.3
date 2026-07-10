@@ -1,3 +1,5 @@
+#include <MyCredentials.h>  // Get private credentials & API Keys.
+
 // Setup file for ESP32 and TTGO T4 v1.3 SPI bus TFT
 // Define TFT_eSPI object with the size of the screen:
 //  240 pixels width and 320 pixels height.
@@ -21,8 +23,34 @@
 //       of the color lines up to the spot.
 #define COLOR_FILL_GRAPH    // If defined, draw colored lines up to the dot.
 
+// In the struct made from multiple ColorStage elements, the third parameter in
+//  each is a pixel length.  
+// If MB_Honor_Line_Length is used, the line length
+//  will be the sum of all of the lengths.
+// If MB_Proportional_Line_Length is used, the line length
+//  will be set in the call and these numbers are used at
+//  ratios of the segment lengths to end up with the specified
+//  line length
+#define MB_Honor_Line_Length        true
+#define MB_Proportional_Line_Length false
+
+// If MB_Rotate_Colors is used, the colors will rotate to the right.
+// If MB_No_Rotate is selected, the colors will not rotate.
+#define MB_Rotate_Colors true
+#define MB_No_Rotate     false
+
+// If MB_Rotate_Colors is used, then the direction, left or right
+//  is defined with the two following parameters.
+#define MB_Rotate_Right true
+#define MB_Rotate_Left  false
+
 #define myName "Triple sNTP Time "         // Version for T4 v1.3
 String OTAhostname = "ESP32 Triple Time";  // For OTA identification/upload.
+
+//*************************************************
+#define iIN_RANGE(v, low, high) (((low) <= (high)) ? ((v) >= (low) && (v) <= (high)) : ((v) >= (low) || (v) <= (high)))
+//SleepTime = xIN_RANGE(12, 23, 10);  // Should return false
+#define xIN_RANGE(v, low, high) (((low) <= (high)) ? ((v) > (low) && (v) < (high)) : ((v) > (low) || (v) < (high)))
 
 #include <SPI.h>           // Hardware management of the display
 #include <TFT_eSPI.h>      // Software management of the display
@@ -59,13 +87,14 @@ OpenFontRender ofr;
 //unsigned long ulLastXRateFetchEpoch; // Epoch time of last fetch.
 
 // To NOT pause XRate fething and continue getting XRate every 3 hours,
-//  search for: "if (!doFetch) {" if the void getXchangeRate() routine 
+//  search for: "if (!doFetch) {" if the void getXchangeRate() routine
 //  and comment out the entire little routine or
 //  add "doFetch = true;" just above it.
 // Or, you could possibly set start to 24 and stop to 24. Not tested!
-#define fetchStartHour 10  // Will start to fetch at 10:00 
+#define fetchStartHour  7  // Will start to fetch at 07:00 
 #define fetchStopHour  23  // Will not fetch starting at 23:00
 
+bool doDebugPrints = false;
 int XRateMon, XRateDay, XRateYr;
 
 //  >>> *** The lengths must all be equal to the longest one *** <<<
@@ -83,19 +112,17 @@ const char * cBotCityname = "Bangui";   // Bottom city name
 //  and configure it to connect to what you use.  There is plenty of
 //  documentation, online, for all 3 connect options.
 // WiFi credentials.  Change to yours for sNTP connect and epoch fetch.
-//const char * ssid      = "LallaveWifi";
-//const char * wifipw    = "Lallave@Family7";
-const char * ssid      = "MikeysWAP";
-const char * wifipw    = "Noogly99";
+const char * ssid      = MDM_SSID;
+const char * wifipw    = MDM_PWD;
 
 // The following is for use in StartWiFiManager to name the captive portal.
 // Connect to 192.168.1.4 to set SSID/PW
-const char* cMyPortalName = "TTZPortal";  
+const char* cMyPortalName = "TTZPortal";
 
 #define changeClockShowPin 38  // Change which of the 2 clocks to show
 #define changeACShowingPin 37  // Change how the analog display looks
 #define changeACbackground 39  // Change the background color of the 
-                               //  Analog Clock
+//  Analog Clock
 
 // >>>>>>>>>>============  End of user changes  ============<<<<<<<<<<
 
@@ -157,25 +184,66 @@ const char * cAPI_Array[] = {
   //  you go over on your first key.  It will automatically switch to the
   //  backup key when it detects that the primary key is exhausted.
 #if defined CONFIG4MIKE
-  "Your_OWM_Key_Here",  // LaoagMikey key
-  "Your_OWM_Key_Here",  // BanguiMikey key (Mike Staples)
-  "Your_OWM_Key_Here",  // Joe 1
-  "Your_OWM_Key_Here",  // Joe 2
+  MDM_API1,   // LaoagMikey key
+  MDM_API2,   // BanguiMikey key (Mike Staples)
+  Joe_API1,  // Joe 1
+  Joe_API2   // Joe 2
 #else
-  "Your_OWM_Key_Here",  // Joe 2
-  "Your_OWM_Key_Here",  // Joe 1
-  "Your_OWM_Key_Here",  // BanguiMikey key (Mike Staples)
-  "Your_OWM_Key_Here",  // LaoagMikey key
+  Joe_API2,  // Joe 2
+  Joe_API1,  // Joe 1
+  MDM_API2,  // BanguiMikey key (Mike Staples)
+  MDM_API1   // LaoagMikey key
 #endif
 };
+
+struct ColorStage {
+  uint16_t startColor;
+  uint16_t endColor;
+  int length; // in pixels
+};
+//ColorStage blendSequence[] = {
+//  {TFT_RED, TFT_ORANGE, 40},
+//  {TFT_ORANGE, TFT_YELLOW, 40},
+//  {TFT_YELLOW, TFT_GREEN, 40},
+//  {TFT_GREEN, TFT_YELLOW, 40},
+//  {TFT_BLUE, TFT_BLUE, 40}
+//};
+
+// Holds rotation state for one line
+struct RainbowLineState {
+  unsigned long nextRotateTime;
+  int startIndex;
+
+  RainbowLineState() {
+    nextRotateTime = 0;
+    startIndex = 0;
+  }
+};
+
+RainbowLineState line1State;
+//RainbowLineState line2State;
+
+ColorStage blendSequence[] = {
+  {TFT_RED, TFT_ORANGE, 40},
+  {TFT_ORANGE, TFT_YELLOW, 40},  // (custom mix: 0xFD20)
+  {TFT_YELLOW, TFT_GREEN, 40},
+  {TFT_GREEN, TFT_CYAN, 40},
+  {TFT_CYAN, TFT_BLUE, 40},
+  {TFT_BLUE, TFT_MAGENTA, 40},
+  {TFT_MAGENTA, TFT_PINK, 40},
+  {TFT_PINK, TFT_PURPLE, 40}, // (custom mix: 0xF81F)
+  {TFT_PURPLE, TFT_RED, 40}  // (custom mix: 0x780F)
+};
+int blendCt = sizeof(blendSequence) / sizeof(blendSequence[0]);
 
 TFT_eSPI tft = TFT_eSPI();
 
 // Sprites are used to eliminate flickering.
-TFT_eSprite clockSprite   = TFT_eSprite(&tft);
-TFT_eSprite scrollSprite  = TFT_eSprite(&tft);
-TFT_eSprite digitalSprite = TFT_eSprite(&tft);
-TFT_eSprite XRateSprite   = TFT_eSprite(&tft);
+TFT_eSprite clockSprite        = TFT_eSprite(&tft);
+TFT_eSprite scrollSprite       = TFT_eSprite(&tft);
+TFT_eSprite digitalSprite      = TFT_eSprite(&tft);
+TFT_eSprite XRateSprite        = TFT_eSprite(&tft);
+//TFT_eSprite XRateCurrentSprite = TFT_eSprite(&tft);
 
 int iScrollSpriteW, iScrollSpriteH;
 float  pctBlend;
@@ -190,6 +258,21 @@ const int iPWM_Resolution = 8;
 // Startup TFT backlight intensity on a scale of 0 to 255.
 const int ledBacklightFull = 255;
 
+// Used to be routines but I figured out how to make it a macro.  Not so hard!
+//***************************************************************************/
+//bool iInRange (int v, int low, int high)  // Inclusive
+//***************************************************************************/
+//{
+//  return (low <= high) ? (v >= low && v <= high) : (v >= low || v <= high);
+//}
+///***************************************************************************/
+//bool xInRange (int v, int low, int high)  // Exclusive
+///***************************************************************************/
+//{
+//SleepTime = xIN_RANGE(21, 23, 10);  // Should return false
+//  return (low  <=  high)  ? ( v  >  low  &&  v  < high)   : ( v  >  low  ||  v  <  high);
+//}
+
 #define RGB565(r,g,b) ((((r>>3)<<11) | ((g>>2)<<5) | (b>>3)))
 #define RGB888(r,g,b) ((r << 16) | (g << 8) | b)
 #define DarkerRed RGB565(150,0,0)
@@ -201,34 +284,39 @@ bool bChangeACBG = false;
 #if defined CONFIG4MIKE
 // Time-controlled display brightness.
 //                           0    1    2    3    4    5            Hours
-int ihourlyBrilliance[] = { 60,  40,  40,  30,  30,  30,      //  0- 5
-                            //6   7    8    9   10   11
-                            50,  70,  90, 100, 140, 150,      //  6-11
-                            //12  13   14   15   16   17
-                            160, 160, 160, 160, 160, 160,     // 12-17
-                            //18  19   20   21   22  23
-                            140, 120, 100,  90,  80, 70   // 18-23
+int ihourlyBrilliance[] = {
+  60,  40,  40,  30,  30,  30,      //  0- 5
+  //6   7    8    9   10   11
+  50,  70,  90, 100, 140, 150,      //  6-11
+  //12  13   14   15   16   17
+  160, 160, 160, 160, 160, 160,     // 12-17
+  //18  19   20   21   22  23
+  140, 120, 100,  90,  80, 70   // 18-23
 #else
 //                          0    1    2    3    4    5            Hours
-int ihourlyBrilliance[] = { 70,  60,  50,  40,  30,  30,      //  0- 5
-                            //6   7    8    9   10   11
-                            50,  60,  70,  80,  80, 100,      //  6-11
-                            //12  13   14   15   16   17
-                            160, 160, 160, 160, 160, 160,     // 12-17
-                            //18   19    20    21    22  23
-                            160,  160,  160,  160,  120, 80   // 18-23
+int ihourlyBrilliance[] = {
+  70,  60,  50,  40,  30,  30,      //  0- 5
+  //6   7    8    9   10   11
+  50,  60,  70,  80,  80, 100,      //  6-11
+  //12  13   14   15   16   17
+  160, 160, 160, 160, 160, 160,     // 12-17
+  //18   19    20    21    22  23
+  160,  160,  160,  160,  120, 80   // 18-23
 #endif
-                          };
+};
 
 // Analog Clock face definitions.
 int   iDigitalClock = 0;
 int   iAnalogClock = 1;
 int   iXGraph = 2;
-int   iMaxShow = 3;  // Until the graphing is ready.
-int   iWhichClock = iDigitalClock;  // Later, save it for restarts.
-char* clockNames[] = {"Multi-time Digital Clock",
+int   iRotate = 3;
+int   iMaxShow = 4;  // Until the graphing is ready.
+//int   iWhichClock = iDigitalClock;  // Later, save it for restarts.
+int   iWhichClock = iRotate;  // Later, save it for restarts.
+const char* clockNames[] = {"Multi-time Digital Clock",
                       "Analog Clock",
-                      "Exchange Rate Graph"
+                      "Exchange Rate Graph",
+                      "Rotate"
                      };
 // Don't ask!
 const  char *numbers[12] = {"6", "5", "4", "3", "2", "1",
@@ -251,7 +339,7 @@ int    iRadius;
 double dAngle;
 float  fPHP_Rate = 0.;
 long   unsigned ulLastXRateFetchEpoch = 0;  // Epoch time of last fetch.
-long   unsigned iStartMillis;
+//long   unsigned iStartMillis;
 
 char   caReadingTime[50];  // For current exchange rate reading.
 int    iTemp;
@@ -269,14 +357,14 @@ int totXRatesaved = 0;  // How many daily XRates are in the array, now.
 float pixelsPerHundredthV;
 const int graphFloorMargin = 20;   // X axis here.
 const int graphLeftMargin  = 40;   // Y axis here from the left.
-// When the graph screen is selected, I only calculate and show it once.  
-//  But if XRate fetch runs, it steals the screen so this bool has to be 
-//  set to tell the graph routine that it needs to refresh the screen.  
-//  It is set other places, too, to remind the graph production routine 
-//  to refresh the screen.  After the graph is shown once, it is deactivated 
-//  by setting this bool to false.  It won't  show again until someone else 
+// When the graph screen is selected, I only calculate and show it once.
+//  But if XRate fetch runs, it steals the screen so this bool has to be
+//  set to tell the graph routine that it needs to refresh the screen.
+//  It is set other places, too, to remind the graph production routine
+//  to refresh the screen.  After the graph is shown once, it is deactivated
+//  by setting this bool to false.  It won't  show again until someone else
 //  tells him to.  We are a cooperative lot!
-bool refreshGraph = true;  // Show the XRate history graph one time.
+//bool refreshGraph = true;  // Show the XRate history graph one time.
 
 // SSDays (Short Short Day) is used for the calendar column headers only.
 String SSDays[7] = {"SU", "MO", "TU", "WE", "TH", "FR", "SA"};
@@ -294,7 +382,7 @@ String SMonths[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
                      };
 
 #define RGB565(r,g,b) ((((r>>3)<<11) | ((g>>2)<<5) | (b>>3)))
-#define DarkerGreen RGB565(0,100,0)
+//#define DarkerGreen RGB565(0,100,0)
 
 //TL_DATUM 0 // Top left (default)
 //TC_DATUM 1 // Upper center
@@ -309,6 +397,6 @@ String SMonths[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 //BC_DATUM 7 // Bottom center
 //BR_DATUM 8 // Bottom right
 // (line on which the character ‘A’ would sit)
-//L_BASELINE 9 // Base line of the left character 
+//L_BASELINE 9 // Base line of the left character
 //C_BASELINE 10 // Base line of the central character
 //R_BASELINE 11 // Base line of the right character

@@ -26,10 +26,10 @@ int DaysInMonth(int iYear, int iMonth)
 /***************************************************************************/
 {
   return iMonth * 275 % 9 > 3 ? 31
-         : iMonth != 2     ? 30
-         : iYear % 4     ? 28
-         : iYear % 100  ? 29
-         : iYear % 400 ? 28
+         : iMonth != 2        ? 30
+         : iYear % 4          ? 28
+         : iYear % 100        ? 29
+         : iYear % 400        ? 28
          : 29;
 }
 /***************************************************************************/
@@ -77,11 +77,9 @@ unsigned int days_in_month(unsigned int month, unsigned int year)
 
   if (month == 2) {
     days = 28 + leap(year);  // function leap returns 1 for leap years
-  }
-  else if (month == 4 || month == 6 || month == 9 || month == 11) {
+  } else if (month == 4 || month == 6 || month == 9 || month == 11) {
     days = 30;
-  }
-  else {
+  } else {
     days = 31;
   }
   return days;
@@ -95,7 +93,7 @@ bool valiDATE(unsigned int month, unsigned int day, unsigned int year)
 
   // Validate the month first
   if (month < 1 || month > 12) {
-    Serial.printf ("\r\nValue for month %i is out of range.\r\n", month);
+    Serial.printf("\r\nValue for month %i is out of range.\r\n", month);
     return false;
   }
 
@@ -103,13 +101,13 @@ bool valiDATE(unsigned int month, unsigned int day, unsigned int year)
   days = days_in_month(month, year);
 
   if (day < 1 || day > days) {
-    Serial.printf ("\r\nValue for day %i is out of range.\r\n", day);
+    Serial.printf("\r\nValue for day %i is out of range.\r\n", day);
     return false;
   }
 
   // Validate the year
   if (year < 1990 || year > 2030) {
-    Serial.printf ("\r\nValue for year %i is out of range.\r\n", year);
+    Serial.printf("\r\nValue for year %i is out of range.\r\n", year);
     return false;
   }
   return true;  // If we got here, it is good!
@@ -151,26 +149,29 @@ void JulianToGregorian(unsigned int JD)
   j = j + 2 - 12 * l;
   i = 100 * (n - 49) + i + l;
   // And, now, the results of today's race...
-  XRateYr = i; XRateMon = j; XRateDay = k;
+  XRateYr = i;
+  XRateMon = j;
+  XRateDay = k;
 }
 /***************************************************************************/
 void printVers()
 /***************************************************************************/
 {
-  int      lastDot, lastV;
+  int lastDot, lastV;
 
   //  Serial.println(__FILENAME__);  // Same as __FILE__
   sTemp = String(__FILE__);
   // Get rid of the trailing .ino tab name. In this case, "\Utilities.ino"
   sTemp = sTemp.substring(0, sTemp.lastIndexOf("\\"));
-  Serial.print("Running from: "); Serial.println(sTemp);
+  Serial.print("Running from: ");
+  Serial.println(sTemp);
 
   sTemp = String(__FILE__);  // Start again for the version number.
   lastDot = sTemp.lastIndexOf(".");
-  if (lastDot > -1) {  // Found a dot.  Thank goodness!
-    lastV = sTemp.lastIndexOf("v");  // Find start of version number
-    if (lastV > -1) {  // Oh, good, found version number, too
-      sVer = sTemp.substring(lastV + 1, lastDot); // Pick up version number
+  if (lastDot > -1) {                              // Found a dot.  Thank goodness!
+    lastV = sTemp.lastIndexOf("v");                // Find start of version number
+    if (lastV > -1) {                              // Oh, good, found version number, too
+      sVer = sTemp.substring(lastV + 1, lastDot);  // Pick up version number
       lastV = sVer.lastIndexOf("\\");
       if (lastV > -1) sVer = sVer.substring(0, lastV);
     } else {
@@ -180,8 +181,7 @@ void printVers()
     sVer = "n/a";  // Something badly wrong here!
   }
   Serial.print("Version " + sVer + " ");
-  Serial.println("Compiled on: " + String(__DATE__) + " at " +
-                 String(__TIME__));
+  Serial.println("Compiled on: " + String(__DATE__) + " at " + String(__TIME__));
 }
 /***************************************************************************/
 void decodeAC_Bits()
@@ -215,8 +215,8 @@ void initDisplay()
   // Note: Currently, font size 28 is used for everything except for
   //  notificaiton screens.  Size 38 is used for notifications screens
   //  and is reset after use, at routine end.
-  tft.init(); // Initialize the screen.
-  tft.setRotation(3);       // Power on top.  1 for power at bottom
+  tft.init();          // Initialize the screen.
+  tft.setRotation(3);  // Power on top.  1 for power at bottom
   iXCenter = tft.width() / 2;
   iYCenter = tft.height() / 2;
   clockSprite.setTextColor(TFT_WHITE);
@@ -226,7 +226,8 @@ void initDisplay()
   if (ofr.loadFont(BritanicBoldTTF, sizeof(BritanicBoldTTF))) {
     Serial.println("Render loadFont error for BritanicBoldTTF. "
                    "InitDisplay 1");
-    while (1);
+    while (1)
+      ;
   }
   ofr.setFontSize(28);
   //  Serial.printf("Text height for size 28 is %i\r\n",
@@ -294,23 +295,24 @@ void deduceOffsets()
   //  Serial.printf("Today is Julian day %i\r\n",
   //                calcJulian(iYear, iMonth, iDay));
 
-  iStartMillis = millis();
+  //  iStartMillis = millis();
 
   Serial.print(cTopCityname);
   // Anybody but me see how silly that 1 is?
-  setenv("TZ", cTopTZ, 1); tzset();
+  setenv("TZ", cTopTZ, 1);
+  tzset();
   time(&workTime);
-  strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
+  strftime(cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
   iYear = atoi(cCharWork);
-  strftime (cCharWork, sizeof(cCharWork), "%m", localtime(&workTime));
+  strftime(cCharWork, sizeof(cCharWork), "%m", localtime(&workTime));
   iMonth = atoi(cCharWork);
-  strftime (cCharWork, sizeof(cCharWork), "%d", localtime(&workTime));
+  strftime(cCharWork, sizeof(cCharWork), "%d", localtime(&workTime));
   iDay = atoi(cCharWork);
   //  Serial.println(localtime(&workTime),
   //                 " initial set %a, %d-%m-%Y %T %Z %z");
   while (iYear < 2024) {
     time(&workTime);
-    strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
+    strftime(cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
     iYear = atoi(cCharWork);
     Serial.print(cTopCityname);
     Serial.println(localtime(&workTime), " waiting %a, %d-%m-%Y %T %Z %z");
@@ -320,22 +322,23 @@ void deduceOffsets()
   //                 " after waiting %a, %d-%m-%Y %T %Z %z");
   Serial.print(localtime(&workTime), " %a, %d-%m-%Y %T %Z %z");
 
-  strftime (cTopDST, 10, "%Z", localtime(&workTime));
-  strftime (cCharWork, sizeof(cCharWork), "%z", localtime(&workTime));
+  strftime(cTopDST, 10, "%Z", localtime(&workTime));
+  strftime(cCharWork, sizeof(cCharWork), "%z", localtime(&workTime));
   iTempOffset = atoi(cCharWork);
   iTopOffset = (iTempOffset / 100) * 3600 + iTempOffset % 100 * 60;
   Serial.printf(" offset = %+i\r\n", iTopOffset);
 
   Serial.print(cBotCityname);
-  setenv("TZ", cBotTZ, 1); tzset();
+  setenv("TZ", cBotTZ, 1);
+  tzset();
   time(&workTime);
-  strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
+  strftime(cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
   iYear = atoi(cCharWork);
   //  Serial.println(localtime(&workTime),
   //                 " initial set %a, %d-%m-%Y %T %Z %z");
   while (iYear < 2024) {
     time(&workTime);
-    strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
+    strftime(cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
     iYear = atoi(cCharWork);
     Serial.print(cBotCityname);
     Serial.println(localtime(&workTime), " waiting %a, %d-%m-%Y %T %Z %z");
@@ -345,9 +348,9 @@ void deduceOffsets()
   //                 " after waiting %a, %d-%m-%Y %T %Z %z");
   Serial.print(localtime(&workTime), " %a, %d-%m-%Y %T %Z %z");
   // Characters of time zone and DST indicator.
-  strftime (cBotDST, 10, "%Z", localtime(&workTime));
+  strftime(cBotDST, 10, "%Z", localtime(&workTime));
   // Seconds offset from UTC.
-  strftime (cCharWork, sizeof(cCharWork), "%z", localtime(&workTime));
+  strftime(cCharWork, sizeof(cCharWork), "%z", localtime(&workTime));
   iTempOffset = atoi(cCharWork);
   iBotOffset = (iTempOffset / 100) * 3600 + iTempOffset % 100 * 60;
   //  Serial.print(cBotCityname);
@@ -357,15 +360,16 @@ void deduceOffsets()
   //  based off of this. They are not kept separately, only created
   //  when needed by adding the offset to UTC.
   Serial.print("UTC");
-  setenv("TZ", cZulu, 1); tzset();
-  strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
+  setenv("TZ", cZulu, 1);
+  tzset();
+  strftime(cCharWork, sizeof(cCharWork), "%Y", localtime(&workTime));
   time(&UTC);
   iYear = atoi(cCharWork);
   //  Serial.println(localtime(&UTC),
   //                 "Zulu initial set %a, %d-%m-%Y %T %Z %z");
   while (iYear < 2024) {
     time(&UTC);
-    strftime (cCharWork, sizeof(cCharWork), "%Y", localtime(&UTC));
+    strftime(cCharWork, sizeof(cCharWork), "%Y", localtime(&UTC));
     iYear = atoi(cCharWork);
     Serial.println(localtime(&UTC), "cZulu waiting %a, %d-%m-%Y %T %Z %z");
     delay(1000);
@@ -436,7 +440,7 @@ void startWiFiManager()
 //  tft.drawString(cMyPortalName, iXCenter, yPos + 85);
 //}
 /***************************************************************************/
-void  startWiFi()
+void startWiFi()
 /***************************************************************************/
 {
   //  WiFi.begin(ssid, wifipw);
@@ -456,10 +460,10 @@ void  startWiFi()
   //  //           1111111
   //  // 01234567890123456
   //  // 84:CC:A8:47:53:98
-  //  String subS = myMACAddress.substring(   0,  2) +
-  //                myMACAddress.substring(3,  5) +
+  //  String subS = myMACAddress.substring( 0,  2) +
+  //                myMACAddress.substring( 3,  5) +
   //                myMACAddress.substring( 6,  8) +
-  //                myMACAddress.substring(9, 11) +
+  //                myMACAddress.substring( 9, 11) +
   //                myMACAddress.substring(12, 14) +
   //                myMACAddress.substring(15);
   //  Serial.print("Scrubbed MAC:\t");
@@ -471,7 +475,7 @@ void startWiFiMulti()
 /***************************************************************************/
 {
   wifiMulti.addAP("Converge2G", "Lallave@Family7");
-  wifiMulti.addAP("MikeysWAP",  "Noogly99");
+  wifiMulti.addAP("MikeysWAP", "Noogly99");
   //  Serial.print("Connecting to WifiMulti...");
   if (wifiMulti.run() != WL_CONNECTED) {
     Serial.print("Trying again...");
@@ -479,21 +483,24 @@ void startWiFiMulti()
     delay(15000);
   }
   if (wifiMulti.run() == WL_CONNECTED) {
-    Serial.print("Host:\t\t"); Serial.println(WiFi.SSID());
-    Serial.print("IP Address:\t"); Serial.println(WiFi.localIP());
-    Serial.print("Wifi RSSI =\t"); Serial.println(WiFi.RSSI());
+    Serial.print("Host:\t\t");
+    Serial.println(WiFi.SSID());
+    Serial.print("IP Address:\t");
+    Serial.println(WiFi.localIP());
+    Serial.print("Wifi RSSI =\t");
+    Serial.println(WiFi.RSSI());
     String myMACAddress = WiFi.macAddress();
-    Serial.print("MAC Address =\t"); Serial.println(myMACAddress);
+    Serial.print("MAC Address =\t");
+    Serial.println(myMACAddress);
     //           1111111
     // 01234567890123456
     // 84:CC:A8:47:53:98
-    String subS
-      = myMACAddress.substring( 0,  2)
-        + myMACAddress.substring( 3,  5)
-        + myMACAddress.substring( 6,  8)
-        + myMACAddress.substring( 9, 11)
-        + myMACAddress.substring(12, 14)
-        + myMACAddress.substring(15);
+    String subS = myMACAddress.substring(0, 2)
+                  + myMACAddress.substring(3, 5)
+                  + myMACAddress.substring(6, 8)
+                  + myMACAddress.substring(9, 11)
+                  + myMACAddress.substring(12, 14)
+                  + myMACAddress.substring(15);
     Serial.print("Scrubbed MAC:\t");
     // String of MAC address without the ":" characters.
     Serial.println(subS);
@@ -519,7 +526,8 @@ void timeSyncCallback(struct timeval *tv)
   //};
   Serial.println("\n----- Time Sync Received -----");
   Serial.printf("Time sync at %u ms. UTC Epoch: ", millis());
-  Serial.print(tv->tv_sec); Serial.print(" - ");
+  Serial.print(tv->tv_sec);
+  Serial.print(" - ");
   Serial.println(ctime(&tv->tv_sec));
   delay(100);
 }
@@ -536,11 +544,13 @@ void getXchangeRate()
 
   bool bFetchOK;
   unsigned long ulEntryUTC = UTC;
-  // If bfirstXRatePass is set to true, here, then the first fetch will be
+  // If bSkipFirstXRateFetch is set to true, here, then the first fetch will be
   //  skipped and the first attempt to fetch an XRate will be the second
   //  entry to this routine.  If set to false, it will try to fetch on
   //  the first entry here.
-  static bool bfirstXRatePass = false;  // False = fetch on the first entry
+
+  static bool bSkipFirstXRateFetch = true;  // False = fetch on the first entry
+
   // True  = delay one 10 minute interval
   // Now variable weekday/weekend
   static unsigned long ulXRateFetchInterval;
@@ -558,8 +568,8 @@ void getXchangeRate()
   //  Serial.printf("%02i:%02i:%02i Entering X Rate fetch. ",
   //                iCurrHour, iCurrMinute, iCurrSecond);
 
-  if (bfirstXRatePass) {
-    bfirstXRatePass = false;  // Define this as false in Definitions.h to
+  if (bSkipFirstXRateFetch) {
+    bSkipFirstXRateFetch = false;  // Define this as false in Definitions.h to
     //                            not skip the first cycle.
     // The reason for delaying one cycle is to reduce the fetch count while
     //  I am working on the code.  If it is fetched every upload, it will
@@ -608,7 +618,7 @@ void getXchangeRate()
 
     if (XR_UTC > 100000)  // Don't show if not initialized (still 0).
       Serial.print(localtime(&XR_UTC), "Next fetch: %c\r\n");
-      
+
     time(&UTC);
     // Been too long? Data old?  This also runs on program startup.
     if (UTC > ulLastXRateFetchEpoch + ulResetXRateTime) {
@@ -649,20 +659,27 @@ void getXchangeRate()
         clockSprite.fillSprite(RGB565(0, 80, 0));
         // Foreground White, Background Dark Green
         ofr.setFontColor(TFT_WHITE, RGB565(0, 80, 0));
-        ofr.setCursor(iXCenter, yPos);      ofr.cprintf("Exchange Rate");
-        ofr.setCursor(iXCenter, yPos + 70); ofr.cprintf("fetch succeeded!");
+        ofr.setCursor(iXCenter, yPos);
+        ofr.cprintf("Exchange Rate");
+        ofr.setCursor(iXCenter, yPos + 70);
+        ofr.cprintf("fetch succeeded!");
         sTemp = sFetchesLeft + "/250 left";  // i.e.,  100/250 left.
+        sTemp = sTemp + " (" + String(iUseAPIkey + 1) + ")";
         ofr.setCursor(iXCenter, yPos + 140);
         ofr.cprintf(sTemp.c_str());  // ofr.cprintf("Sweet!!");
         clockSprite.pushSprite(0, 0);
-        bNewRate = true;             // Resize sooner than next minute.
+        bNewRate = true;  // Resize sooner than next minute.
         // Screen stolen. If graph screen shown, refresh it.
-        refreshGraph = true;
+        //        refreshGraph = true;
         for (i = 0; i < 2; i++) {
-          tft.invertDisplay(true); delay(200);
-          tft.invertDisplay(false); delay(200);
-          tft.invertDisplay(true); delay(200);
-          tft.invertDisplay(false); delay(200);
+          tft.invertDisplay(true);
+          delay(200);
+          tft.invertDisplay(false);
+          delay(200);
+          tft.invertDisplay(true);
+          delay(200);
+          tft.invertDisplay(false);
+          delay(200);
         }
         delay(3000);
 
@@ -701,7 +718,7 @@ void getXchangeRate()
           // Put in the XRate for today.
           XRateHist[XRateHistLen - 1] = fPHP_Rate;
 
-          countXRate(false, true);  // Count and print the total non-zero.
+          countXRate(true, true);  // Count and print the total non-zero.
 
           Serial.println("Saving XRate history in NVS flash entries. (New)");
           preferences.begin("TripleTime", RW_MODE);
@@ -749,15 +766,20 @@ void getXchangeRate()
         clockSprite.fillSprite(DarkerRed);
         // Foreground color, Background color
         ofr.setFontColor(TFT_YELLOW, DarkerRed);
-        ofr.setCursor(iXCenter, yPos);       ofr.cprintf("XRate fetch");
-        ofr.setCursor(iXCenter, yPos + 70);  ofr.cprintf("failed. Retry");
-        ofr.setCursor(iXCenter, yPos + 140); ofr.cprintf("in 10 minutes.");
+        ofr.setCursor(iXCenter, yPos);
+        ofr.cprintf("XRate fetch");
+        ofr.setCursor(iXCenter, yPos + 70);
+        ofr.cprintf("failed. Retry");
+        ofr.setCursor(iXCenter, yPos + 140);
+        ofr.cprintf("in 10 minutes.");
         clockSprite.pushSprite(0, 0);
         // Screen stolen from paused graph screen. Enable updating.
-        refreshGraph = true;
+        //        refreshGraph = true;
         for (i = 0; i < 2; i++) {
-          tft.invertDisplay(true); delay(200);
-          tft.invertDisplay(false); delay(200);
+          tft.invertDisplay(true);
+          delay(200);
+          tft.invertDisplay(false);
+          delay(200);
         }
         delay(2000);
       }
@@ -785,11 +807,12 @@ bool xRateWorker(int iTry)
     }
   */
   static String sServerPath;
-  bool  bPktValidity = false;  // True if good exchange rate fetched
+  bool bPktValidity = false;  // True if good exchange rate fetched
   // To get it into the loop. This is the code for API key exhausted.
   int iHttpResponseCode = 429;
 
-  StaticJsonDocument<200> doc;  // Allocate 200 bytes on the stack.
+  //  StaticJsonDocument<200> doc;  // Allocate 200 bytes on the stack.
+  JsonDocument doc;  // v7 style
   //Get just PHP compared to USD.  Returns about 136 bytes.
   //https://api.apilayer.com/exchangerates_data/latest?symbols=PHP
   // &base=USD&apikey=k5MJFkvlen6ebpAvKRpUlbbBd7uPAzAC
@@ -816,12 +839,15 @@ bool xRateWorker(int iTry)
       clockSprite.fillSprite(RGB565(0, 80, 0));
       // Foreground color, Background color
       ofr.setFontColor(TFT_WHITE, RGB565(0, 80, 0));
-      ofr.setCursor(iXCenter, yPos);       ofr.cprintf("Attempting to");
-      ofr.setCursor(iXCenter, yPos + 70);  ofr.cprintf("fetch X rate.");
-      ofr.setCursor(iXCenter, yPos + 140); ofr.cprintf(cCharWork);
+      ofr.setCursor(iXCenter, yPos);
+      ofr.cprintf("Attempting to");
+      ofr.setCursor(iXCenter, yPos + 70);
+      ofr.cprintf("fetch X rate.");
+      ofr.setCursor(iXCenter, yPos + 140);
+      ofr.cprintf(cCharWork);
       clockSprite.pushSprite(0, 0);
       // Screen stolen from paused graph screen. Enable updating.
-      refreshGraph = true;
+      //      refreshGraph = true;
 
       http.setTimeout(30000);         // Yeah, maybe...
       http.setConnectTimeout(30000);  // Yeah, maybe...
@@ -835,9 +861,8 @@ bool xRateWorker(int iTry)
           X-RateLimit-Remaining-Day: nnnn
           X-RateLimit-Remaining-Month: nnnn
       */
-      const char *headerKeys[] = {"x-ratelimit-remaining-month"};
-      const size_t headerKeysCount = sizeof(headerKeys) /
-                                     sizeof(headerKeys[0]);
+      const char *headerKeys[] = { "x-ratelimit-remaining-month" };
+      const size_t headerKeysCount = sizeof(headerKeys) / sizeof(headerKeys[0]);
       http.collectHeaders(headerKeys, headerKeysCount);
 
       iHttpResponseCode = http.GET();
@@ -853,13 +878,11 @@ bool xRateWorker(int iTry)
       if (iHttpResponseCode == 429) iUseAPIkey++;
     }
 
-    if (iHttpResponseCode == HTTPC_ERROR_CONNECTION_REFUSED)
-    {
+    if (iHttpResponseCode == HTTPC_ERROR_CONNECTION_REFUSED) {
       Serial.println("http.GET request connection refused.");
       return false;
 
-    }
-    else if (iHttpResponseCode == 200) {  // 200 is goodness!
+    } else if (iHttpResponseCode == 200) {  // 200 is goodness!
 
       // Print all headers
       int headerCount = http.headers();
@@ -867,20 +890,19 @@ bool xRateWorker(int iTry)
       //                    headerCount);
       for (int i = 0; i < headerCount; i++) {
         //        Serial.println(http.header((size_t) 0));
-        sFetchesLeft = http.header((size_t) 0);
+        sFetchesLeft = http.header((size_t)0);
         sFetchesLeft = sFetchesLeft.substring(0,
                                               sFetchesLeft.lastIndexOf(":"));
         //        Serial.printf("%s: %s gave %s\r\n",
         //                      http.headerName(i).c_str(),
         //                      http.header(i).c_str(), sFetchesLeft);
-        if (sFetchesLeft == "")
-        {
+        if (sFetchesLeft == "") {
           Serial.println("No header data received for calls left value.");
           sFetchesLeft = "n/a";
-        }
-        else
+        } else
           Serial.printf("There are %s XRate calls left for this key"
-                        " this month.\r\n", sFetchesLeft/*, sTemp.toInt()*/);
+                        " this month.\r\n",
+                        sFetchesLeft /*, sTemp.toInt()*/);
       }
       // Now, get the payload (the actual data I asked for).
       String payload = http.getString();
@@ -909,7 +931,7 @@ bool xRateWorker(int iTry)
       // Assuming, for now, that the bottom clock is local time.
       long int os = iBotOffset;
 #else
-      // Assuming, for now, that the bottom clock is local time.
+      // Assuming, for now, that the top clock is local time.
       long int os = iTopOffset;
 #endif
       // Really!  Get rid of this.  Convert to what's used elsewhere
@@ -939,7 +961,7 @@ bool xRateWorker(int iTry)
       if (iHttpResponseCode == -11) {
         Serial.printf("%lu - Bad HTTP return code %i. "
                       "Exchange rate packet ignored.\r\n",
-                      millis(), iHttpResponseCode );
+                      millis(), iHttpResponseCode);
         Serial.println("Probably timeout condition.");
       }
       if (iHttpResponseCode == -1)
@@ -954,7 +976,7 @@ bool xRateWorker(int iTry)
 void initOTA()
 /****************************************************************************/
 {
-  ArduinoOTA.setHostname(OTAhostname.c_str()); //define OTA port hostname
+  ArduinoOTA.setHostname(OTAhostname.c_str());  //define OTA port hostname
   ArduinoOTA.begin();
 }
 /****************************************************************************/
@@ -963,8 +985,9 @@ void initTime()
 {
   sntp_set_sync_interval(86400000);  // 1 day in ms.
   sntp_set_time_sync_notification_cb(timeSyncCallback);
-  configTime(0, 0, "oceania.pool.ntp.org", "time.nist.gov");
-  setenv("TZ", cZulu, 1); tzset();
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+  setenv("TZ", cZulu, 1);
+  tzset();
   displayW_Header("Waiting for right time");
   //  Serial.println("Waiting for correct time...");
 
@@ -975,7 +998,7 @@ void initTime()
   int iLooper = 0;
   while (iYear < 2024) {
     time(&UTC);
-    strftime (cCharWork, 100, "%Y", localtime(&UTC));
+    strftime(cCharWork, 100, "%Y", localtime(&UTC));
     iYear = atoi(cCharWork);
     //    Serial.printf("1 iYear %i\r\n", iYear);
     Serial.println(localtime(&UTC), "UTC %a %m-%d-%Y %T");
@@ -1009,7 +1032,7 @@ void allocateSprites()
   //  double what you need and it blows the stack!
 
   // Leave room for 1st sprite
-  a = (int*)clockSprite.createSprite(tft.width(), tft.height());
+  a = (int *)clockSprite.createSprite(tft.width(), tft.height());
   if (a == 0) {
     Serial.println("clockSprite creation failed.  Cannot continue.");
     spriteAllocError("clockSprite");
@@ -1018,15 +1041,18 @@ void allocateSprites()
   //  Serial.printf("createclockSprite returned: %p\r\n", a);
 
   // 1st sprite for scrolling info
-  a = (int*)scrollSprite.createSprite(iScrollSpriteW, iScrollSpriteH);
+  a = (int *)scrollSprite.createSprite(iScrollSpriteW, iScrollSpriteH);
   if (a == 0) {
     Serial.println("scrollSprite creation failed.  Cannot continue.");
     spriteAllocError("scrollSprite");
     while (1) ArduinoOTA.handle();
   }
+  scrollSprite.fillSprite(DarkBlue);
+  tft.fillRect(0, 0, tft.width(), iScrollSpriteH, DarkBlue);
+
   //  Serial.printf("createscrollSprite returned: %p\r\n", a);
 
-  a = (int*)digitalSprite.createSprite(tft.width(), tft.height());
+  a = (int *)digitalSprite.createSprite(tft.width(), tft.height());
   if (a == 0) {
     Serial.println("digitalSprite creation failed.  Cannot continue.");
     spriteAllocError("digitalSprite");
@@ -1037,12 +1063,20 @@ void allocateSprites()
   scrollSprite.fillSprite(DarkBlue);
   scrollSprite.setTextColor(TFT_WHITE, DarkBlue);
 
-  a = (int*)XRateSprite.createSprite(tft.width(), tft.height());
+  a = (int *)XRateSprite.createSprite(tft.width(), tft.height());
   if (a == 0) {
     Serial.println("XRateSprite creation failed.  Cannot continue.");
     spriteAllocError("XRateSprite");
     while (1) ArduinoOTA.handle();
   }
+  //  Serial.printf("createXRateGraphSprite returned: %p\r\n", a);
+
+  //  a = (int *)XRateCurrentSprite.createSprite(tft.width(), 1);
+  //  if (a == 0) {
+  //    Serial.println("XRateCurrentSprite creation failed.  Cannot continue.");
+  //    spriteAllocError("XRateCurrentSprite");
+  //    while (1) ArduinoOTA.handle();
+  //  }
   //  Serial.printf("createXRateGraphSprite returned: %p\r\n", a);
 
   Serial.printf("Analog clock radius is %i\r\n", iRadius);
@@ -1095,20 +1129,20 @@ void drawGradientLine(TFT_eSprite *targetSprite,
   // Serial.printf("x1 % i, y1 % i, x2 % i, y2 % i, "
   //               "steps % i, blendLvls % i\r\n",
   //               x1, y2, x2, y1, steps, blendLvls);
-  x = x1; y = y1;
+  x = x1;
+  y = y1;
   for (int i = 0; i <= steps; i++) {
     pctBlend = (float)i / (float)blendLvls;
-    blendedColor = alphaBlend((uint8_t)(pctBlend * 255),
-                              colorStart, colorEnd);
+    blendedColor = alphaBlendOrig((uint8_t)(pctBlend * 255),
+                                  colorStart, colorEnd);
     targetSprite->drawPixel(x, y, blendedColor);
 
     if ((x1 - x2) == 0) y2 > y1 ? y++ : y--;  // Am I drawing horizontal or
     if ((y1 - y2) == 0) x2 > x1 ? x++ : x--;  // vertical. This decides.
-
   }
 }
 /***************************************************************************/
-uint16_t alphaBlend(uint8_t alpha, uint16_t fgc, uint16_t bgc)
+uint16_t alphaBlendOrig(uint8_t alpha, uint16_t fgc, uint16_t bgc)
 /***************************************************************************/
 {
   uint32_t rxb = bgc & 0xF81F;
@@ -1118,7 +1152,254 @@ uint16_t alphaBlend(uint8_t alpha, uint16_t fgc, uint16_t bgc)
   return (rxb & 0xF81F) | (xgx & 0x07E0);
 }
 /***************************************************************************/
-void drawArrowLine(TFT_eSPI* targetPallete,  // where line and arrow goes.
+uint16_t alphaBlendLinear(uint8_t alpha, uint16_t c0, uint16_t c1)
+/***************************************************************************/
+{
+  // alpha: 0 = c0, 255 = c1
+  uint8_t r0 = (c0 >> 11) & 0x1F;
+  uint8_t g0 = (c0 >> 5)  & 0x3F;
+  uint8_t b0 =  c0        & 0x1F;
+
+  uint8_t r1 = (c1 >> 11) & 0x1F;
+  uint8_t g1 = (c1 >> 5)  & 0x3F;
+  uint8_t b1 =  c1        & 0x1F;
+
+  uint8_t r = r0 + ((r1 - r0) * alpha) / 255;
+  uint8_t g = g0 + ((g1 - g0) * alpha) / 255;
+  uint8_t b = b0 + ((b1 - b0) * alpha) / 255;
+
+  return (r << 11) | (g << 5) | b;
+}
+/***************************************************************************/
+uint16_t alphaBlendBetter(uint8_t alpha, uint16_t c0, uint16_t c1)
+/***************************************************************************/
+{
+  // Expand to 8-bit per channel
+  uint8_t r0 = ((c0 >> 11) & 0x1F) * 255 / 31;
+  uint8_t g0 = ((c0 >> 5)  & 0x3F) * 255 / 63;
+  uint8_t b0 = (c0 & 0x1F) * 255 / 31;
+
+  uint8_t r1 = ((c1 >> 11) & 0x1F) * 255 / 31;
+  uint8_t g1 = ((c1 >> 5)  & 0x3F) * 255 / 63;
+  uint8_t b1 = (c1 & 0x1F) * 255 / 31;
+
+  // Linear blend in 8-bit space
+  uint8_t r = r0 + ((r1 - r0) * alpha) / 255;
+  uint8_t g = g0 + ((g1 - g0) * alpha) / 255;
+  uint8_t b = b0 + ((b1 - b0) * alpha) / 255;
+
+  // Quantize back to 565
+  return ((r * 31 / 255) << 11) | ((g * 63 / 255) << 5) | (b * 31 / 255);
+}
+/***************************************************************************/
+uint16_t alphaBlendGamma(uint8_t alpha, uint16_t c0, uint16_t c1)
+/***************************************************************************/
+{
+  // Expand to 8-bit per channel
+  uint8_t r0 = ((c0 >> 11) & 0x1F) * 255 / 31;
+  uint8_t g0 = ((c0 >> 5)  & 0x3F) * 255 / 63;
+  uint8_t b0 = (c0 & 0x1F) * 255 / 31;
+
+  uint8_t r1 = ((c1 >> 11) & 0x1F) * 255 / 31;
+  uint8_t g1 = ((c1 >> 5)  & 0x3F) * 255 / 63;
+  uint8_t b1 = (c1 & 0x1F) * 255 / 31;
+
+  // Apply gamma correction to alpha
+  float gamma = 1.6f;  // tweak this value to taste
+  float t = pow(alpha / 255.0f, gamma);
+  uint8_t a = (uint8_t)(t * 255);
+
+  // Linear blend in 8-bit space using gamma-adjusted alpha
+  uint8_t r = r0 + ((r1 - r0) * a) / 255;
+  uint8_t g = g0 + ((g1 - g0) * a) / 255;
+  uint8_t b = b0 + ((b1 - b0) * a) / 255;
+
+  // Quantize back to 565
+  return ((r * 31 / 255) << 11) | ((g * 63 / 255) << 5) | (b * 31 / 255);
+}
+/***************************************************************************/
+uint16_t alphaBlendHSV(uint8_t alpha, uint16_t c0, uint16_t c1)
+/***************************************************************************/
+{
+  // Expand to 8-bit RGB
+  auto toRGB = [](uint16_t c) {
+    uint8_t r = ((c >> 11) & 0x1F) * 255 / 31;
+    uint8_t g = ((c >> 5)  & 0x3F) * 255 / 63;
+    uint8_t b = (c & 0x1F) * 255 / 31;
+    return std::tuple<uint8_t, uint8_t, uint8_t>(r, g, b);
+  };
+
+  auto [r0, g0, b0] = toRGB(c0);
+  auto [r1, g1, b1] = toRGB(c1);
+
+  // Convert RGB → HSV
+  auto rgb2hsv = [](uint8_t r, uint8_t g, uint8_t b) {
+    float rf = r / 255.0f, gf = g / 255.0f, bf = b / 255.0f;
+    float maxv = std::max({rf, gf, bf});
+    float minv = std::min({rf, gf, bf});
+    float d = maxv - minv;
+    float h = 0.0f;
+    if (d > 1e-6f) {
+      if (maxv == rf) h = fmod(((gf - bf) / d), 6.0f);
+      else if (maxv == gf) h = ((bf - rf) / d) + 2.0f;
+      else h = ((rf - gf) / d) + 4.0f;
+      h *= 60.0f;
+      if (h < 0) h += 360.0f;
+    }
+    float s = maxv == 0 ? 0 : d / maxv;
+    float v = maxv;
+    return std::tuple<float, float, float>(h, s, v);
+  };
+
+  auto [h0, s0, v0] = rgb2hsv(r0, g0, b0);
+  auto [h1, s1, v1] = rgb2hsv(r1, g1, b1);
+
+  // Interpolate in HSV space
+  float t = alpha / 255.0f;
+  // Hue interpolation: shortest arc
+  float dh = fmod((h1 - h0 + 540.0f), 360.0f) - 180.0f;
+  float h = fmod((h0 + t * dh + 360.0f), 360.0f);
+  float s = s0 + (s1 - s0) * t;
+  // Instead of v = v0 + (v1 - v0)*t;
+  float v = (v0 + (v1 - v0) * t) * 0.9f; // scale down to avoid clipping
+  // Trying to get rid of the white ends.
+  v = std::min(v, 0.7f); // cap brightness
+
+  // Convert HSV → RGB
+  auto hsv2rgb = [](float h, float s, float v) {
+    float c = v * s;
+    float x = c * (1 - fabs(fmod(h / 60.0f, 2) - 1));
+    float m = v - c;
+    float rf, gf, bf;
+    if (h < 60)      {
+      rf = c;
+      gf = x;
+      bf = 0;
+    }
+    else if (h < 120)  {
+      rf = x;
+      gf = c;
+      bf = 0;
+    }
+    else if (h < 180)  {
+      rf = 0;
+      gf = c;
+      bf = x;
+    }
+    else if (h < 240)  {
+      rf = 0;
+      gf = x;
+      bf = c;
+    }
+    else if (h < 300)  {
+      rf = x;
+      gf = 0;
+      bf = c;
+    }
+    else             {
+      rf = c;
+      gf = 0;
+      bf = x;
+    }
+    uint8_t r = (uint8_t)((rf + m) * 255);
+    uint8_t g = (uint8_t)((gf + m) * 255);
+    uint8_t b = (uint8_t)((bf + m) * 255);
+    return std::tuple<uint8_t, uint8_t, uint8_t>(r, g, b);
+  };
+
+  auto [r, g, b] = hsv2rgb(h, s, v);
+
+  // Quantize back to RGB565
+  return ((r * 31 / 255) << 11) | ((g * 63 / 255) << 5) | (b * 31 / 255);
+}
+/***************************************************************************/
+uint16_t alphaBlendLAB(uint8_t alpha, uint16_t c0, uint16_t c1)
+/***************************************************************************/
+{
+  // --- Helper: RGB565 → 8-bit RGB
+  auto toRGB = [](uint16_t c) {
+    uint8_t r = ((c >> 11) & 0x1F) * 255 / 31;
+    uint8_t g = ((c >> 5)  & 0x3F) * 255 / 63;
+    uint8_t b = (c & 0x1F) * 255 / 31;
+    return std::tuple<uint8_t, uint8_t, uint8_t>(r, g, b);
+  };
+
+  auto [r0, g0, b0] = toRGB(c0);
+  auto [r1, g1, b1] = toRGB(c1);
+
+  // --- Helper: RGB → XYZ
+  auto rgb2xyz = [](uint8_t r, uint8_t g, uint8_t b) {
+    auto f = [](float u) {
+      return (u > 0.04045f) ? pow((u + 0.055f) / 1.055f, 2.4f) : u / 12.92f;
+    };
+    float R = f(r / 255.0f), G = f(g / 255.0f), B = f(b / 255.0f);
+    float X = R * 0.4124f + G * 0.3576f + B * 0.1805f;
+    float Y = R * 0.2126f + G * 0.7152f + B * 0.0722f;
+    float Z = R * 0.0193f + G * 0.1192f + B * 0.9505f;
+    return std::tuple<float, float, float>(X, Y, Z);
+  };
+
+  // --- Helper: XYZ → LAB
+  auto xyz2lab = [](float X, float Y, float Z) {
+    // D65 reference white
+    float Xn = 0.95047f, Yn = 1.00000f, Zn = 1.08883f;
+    auto f = [](float t) {
+      return (t > 0.008856f) ? pow(t, 1.0f / 3.0f) : (7.787f * t + 16.0f / 116.0f);
+    };
+    float fx = f(X / Xn), fy = f(Y / Yn), fz = f(Z / Zn);
+    float L = 116.0f * fy - 16.0f;
+    float a = 500.0f * (fx - fy);
+    float b_lab = 200.0f * (fy - fz);
+    return std::tuple<float, float, float>(L, a, b_lab);
+  };
+
+  auto [X0, Y0, Z0] = rgb2xyz(r0, g0, b0);
+  auto [X1, Y1, Z1] = rgb2xyz(r1, g1, b1);
+  auto [L0, a0, b0_lab] = xyz2lab(X0, Y0, Z0);
+  auto [L1, a1, b1_lab] = xyz2lab(X1, Y1, Z1);
+
+  // --- Interpolate in LAB
+  float t = alpha / 255.0f;
+  float L = L0 + (L1 - L0) * t;
+  float a = a0 + (a1 - a0) * t;
+  float b_lab = b0_lab + (b1_lab - b0_lab) * t;
+
+  // --- LAB → XYZ
+  auto lab2xyz = [&](float L, float a, float b_lab) {
+    float fy = (L + 16.0f) / 116.0f;
+    float fx = a / 500.0f + fy;
+    float fz = fy - b_lab / 200.0f;
+    auto finv = [](float t) {
+      return (t * t * t > 0.008856f) ? t * t * t : (t - 16.0f / 116.0f) / 7.787f;
+    };
+    float Xn = 0.95047f, Yn = 1.00000f, Zn = 1.08883f;
+    float X = Xn * finv(fx), Y = Yn * finv(fy), Z = Zn * finv(fz);
+    return std::tuple<float, float, float>(X, Y, Z);
+  };
+
+  auto [X, Y, Z] = lab2xyz(L, a, b_lab);
+
+  // --- XYZ → RGB
+  auto xyz2rgb = [&](float X, float Y, float Z) {
+    float R = X * 3.2406f + Y * -1.5372f + Z * -0.4986f;
+    float G = X * -0.9689f + Y * 1.8758f + Z * 0.0415f;
+    float B = X * 0.0557f + Y * -0.2040f + Z * 1.0570f;
+    auto finv = [](float u) {
+      return (u > 0.0031308f) ? 1.055f * pow(u, 1.0f / 2.4f) - 0.055f : 12.92f * u;
+    };
+    uint8_t r = (uint8_t)std::clamp(finv(R) * 255.0f, 0.0f, 255.0f);
+    uint8_t g = (uint8_t)std::clamp(finv(G) * 255.0f, 0.0f, 255.0f);
+    uint8_t b = (uint8_t)std::clamp(finv(B) * 255.0f, 0.0f, 255.0f);
+    return std::tuple<uint8_t, uint8_t, uint8_t>(r, g, b);
+  };
+
+  auto [r, g, b] = xyz2rgb(X, Y, Z);
+
+  // --- Back to RGB565
+  return ((r * 31 / 255) << 11) | ((g * 63 / 255) << 5) | (b * 31 / 255);
+}
+/***************************************************************************/
+void drawArrowLine(TFT_eSPI *targetPallete,  // where line and arrow goes.
                    // Line start and end x & y
                    int x0, int y0, int x1, int y1,
                    // Line color.
@@ -1161,3 +1442,181 @@ void drawArrowLine(TFT_eSPI* targetPallete,  // where line and arrow goes.
     // Do you want the triangle filled with the triangle line color?
   }
 }
+/***************************************************************************/
+void drawMultiBlendLine(TFT_eSPI *targetPallete,       // Display target
+                        int x0, int y0,               // Line start
+                        int x1, int y1,               // Line end
+                        ColorStage *stages,           // Colors list
+                        int numStages,                // Colors count
+                        bool honorLineLength,         // True? Use x,y/x1,y1
+                        bool rotateColors,            // Rotate if true
+                        bool rotateDirection,         // Which way to rotate
+                        unsigned long rotateInterval, // ms rotate delay
+                        RainbowLineState *state)      // Rotate start
+/***************************************************************************/
+{
+  static unsigned long nextRotateTime = 0;
+  static int startIndex = 0;  // logical rotation pointer
+
+  float dx = x1 - x0;
+  float dy = y1 - y0;
+  float actualLength = sqrt(dx * dx + dy * dy);
+  float angle = atan2(dy, dx);
+  float stepX = cos(angle);
+  float stepY = sin(angle);
+  int   fillX, fillY;
+  float scale = 1.0;
+  int idx;
+
+  // Perform rotation when the interval has passed:
+  //  Serial.printf("millis %lu, nextRotateTime %lu\r\n", millis(), nextRotateTime);
+  if (rotateColors && millis() >= nextRotateTime) {
+    nextRotateTime = millis() + rotateInterval;
+    startIndex = (startIndex + 1) % numStages;  // bump and wrap
+    //    Serial.printf("Start index now %i of %i\r\n", startIndex, numStages);
+  }
+
+  int blendLength = 0;
+  for (int i = 0; i < numStages; i++) blendLength += stages[i].length;
+
+  if (honorLineLength && blendLength > 0)
+    scale = actualLength / blendLength;
+
+  float curX = x0;
+  float curY = y0;
+
+  // Loop through stages with logical rotation
+  for (int i = 0; i < numStages; i++) {
+    if (rotateDirection) {
+      idx = startIndex - i;  // Rotate right
+      if (idx < 0) idx += numStages;  // wrap manually
+    } else {
+      idx = (startIndex + i) % numStages; // Rotate left
+    }
+
+    ColorStage stage = stages[idx];
+    for (int j = 0; j < stage.length; j++) {
+      // Use stage.length - 1 so the last pixel reaches full endColor
+      float ratio = (stage.length > 1) ? (float)j / (stage.length - 1) : 0.0f;
+      uint16_t blended = alphaBlendOrig(ratio * 255, stage.startColor, stage.endColor);
+
+      if (doDebugPrints)
+        Serial.printf("Orig: x %i, y %i, i %i, j %i, "
+                      "scale %.2f, blended %lu\r\n",
+                      int(curX), int(curY), i, j, scale, blended);
+
+      targetPallete->drawPixel((int)curX, (int)curY, blended);
+      fillX = int(curX);
+      fillY = int(curY);
+      curX += stepX * scale;
+      curY += stepY * scale;
+
+      // Fill in holes if step > 1 pixel
+      while (int(curX) != fillX || int(curY) != fillY) {
+        if (int(curX) > fillX) {
+          fillX += 1;
+          targetPallete->drawPixel(fillX, int(curY), blended);
+        }
+        if (int(curX) < fillX) {
+          fillX -= 1;
+          targetPallete->drawPixel(fillX, int(curY), blended);
+        }
+        if (int(curY) > fillY) {
+          fillY += 1;
+          targetPallete->drawPixel(fillX, fillY, blended);
+        }
+        if (int(curY) < fillY) {
+          fillY -= 1;
+          targetPallete->drawPixel(fillX, fillY, blended);
+        }
+      }
+    }
+  }
+}
+/***************************************************************************/
+void calcSegmentLengths(ColorStage *stages, int numStages, int totalLength)
+/***************************************************************************/
+{
+  int autoCount = 0;
+  for (int i = 0; i < numStages; i++) {
+    if (stages[i].length == 0) autoCount++;
+  }
+  if (autoCount > 0) {
+    int autoLen = totalLength / autoCount;
+    for (int i = 0; i < numStages; i++) {
+      if (stages[i].length == 0) stages[i].length = autoLen;
+    }
+  }
+}
+///***************************************************************************/
+//void drawMultiBlendLine(TFT_eSPI *targetPallete,
+//                         int x0, int y0, int x1, int y1,
+//                         ColorStage *stages, int numStages,
+//                         bool honorLineLength,
+//                         bool rotateColors, unsigned long rotateInterval,
+//                         RainbowLineState *state)
+///***************************************************************************/
+//{
+//  float dx = x1 - x0;
+//  float dy = y1 - y0;
+//  float actualLength = sqrt(dx * dx + dy * dy);
+//  float angle = atan2(dy, dx);
+//  float stepX = cos(angle);
+//  float stepY = sin(angle);
+//  int fillX, fillY;
+//  float scale = 1.0;
+//
+//  // Perform rotation when the interval has passed:
+//  if (rotateColors && millis() >= state->nextRotateTime) {
+//    state->nextRotateTime = millis() + rotateInterval;
+//    state->startIndex = (state->startIndex + 1) % numStages;
+//  }
+//
+//  int blendLength = 0;
+//  for (int i = 0; i < numStages; i++) blendLength += stages[i].length;
+//  calcSegmentLengths(stages, numStages, blendLength);
+//
+//  if (!honorLineLength)
+//    scale = actualLength / blendLength;
+//
+//  float curX = x0;
+//  float curY = y0;
+//
+//  // Loop through stages with logical rotation
+//  for (int i = 0; i < numStages; i++) {
+//    int idx = (state->startIndex + i) % numStages;
+//    ColorStage stage = stages[idx];
+//
+//    for (int j = 0; j < stage.length; j++) {
+//      float ratio = (float)j / stage.length;
+//      uint16_t blended = alphaBlend(ratio * 255, stage.startColor,
+//                                    stage.endColor);
+//
+//      targetPallete->drawPixel((int)curX, (int)curY, blended);
+//      fillX = int(curX);
+//      fillY = int(curY);
+//      curX += stepX * scale;
+//      curY += stepY * scale;
+//
+//      // Fill in holes if step > 1 pixel
+//      while (int(curX) != fillX || int(curY) != fillY) {
+//        if (int(curX) > fillX) {
+//          fillX++;
+//          targetPallete->drawPixel(fillX, int(curY), blended);
+//        }
+//        if (int(curX) < fillX) {
+//          fillX--;
+//          targetPallete->drawPixel(fillX, int(curY), blended);
+//        }
+//        if (int(curY) > fillY) {
+//          fillY++;
+//          targetPallete->drawPixel(fillX, fillY, blended);
+//        }
+//        if (int(curY) < fillY) {
+//          fillY--;
+//          targetPallete->drawPixel(fillX, fillY, blended);
+//        }
+//      }
+//    }
+//  }
+//}

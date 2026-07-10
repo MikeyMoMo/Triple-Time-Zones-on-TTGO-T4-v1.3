@@ -4,6 +4,7 @@ void updateAnalogClock(time_t workTime)
 {
   static int iPrevHour = -1;
   static int iForeColor = TFT_GOLD, iBackColor, iTotBrightness, R, G, B;
+  static uint32_t diffLineColor;
 
   //  iStartMillis = millis();
   // Change the background color on the hour.  But not too bright!
@@ -222,6 +223,17 @@ void updateAnalogClock(time_t workTime)
     clockSprite.setTextDatum(iSavDatum);
   }
 
+  // If current XRate is > ending yesterday,
+  //  draw background and dot in green, else red.
+  diffLineColor = RGB565(255, 120, 80);  // was 100, 100
+//  diffBackColor = TFT_BLACK;
+  if (fPHP_Rate > XRateHist[XRateHistLen - 2]) {
+    diffLineColor = TFT_GREEN;  // diffBackColor = TFT_BLACK;
+  }
+  if (fPHP_Rate == XRateHist[XRateHistLen - 2]) {
+    diffLineColor = TFT_WHITE;  // diffBackColor = TFT_BLACK;
+  }
+
   // Show the XRate on if digital time is shown (long or short).
   // It will be on top of hands.
   // Yeah, the extra parens is needed!
@@ -231,6 +243,7 @@ void updateAnalogClock(time_t workTime)
     if (txtLen > maxTxtLen3) maxTxtLen3 = txtLen;
     iSavDatum = clockSprite.getTextDatum();
     clockSprite.setTextDatum(TL_DATUM);
+    clockSprite.setTextColor(diffLineColor);
     clockSprite.drawString(cCharWork,  iXCenter - maxTxtLen3 / 2,
                            tft.height()*.28);
     clockSprite.setTextDatum(iSavDatum);
